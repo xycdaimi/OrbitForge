@@ -1,45 +1,57 @@
-const items = [
+"use client";
+
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { MessageKey } from "@/lib/i18n/messages";
+
+const items: Array<{
+  titleKey: MessageKey;
+  bodyKey: MessageKey;
+  accent: "cyan" | "violet";
+  className: string;
+}> = [
   {
-    title: "AI Engineering",
-    body: "Agent、RAG、模型服务与推理优化。",
-    accent: "cyan" as const,
+    titleKey: "home.focus.ai.title",
+    bodyKey: "home.focus.ai.body",
+    accent: "cyan",
     className: "sm:col-span-2",
   },
   {
-    title: "Model Training",
-    body: "数据、训练过程、实验记录与失败分析。",
-    accent: "violet" as const,
+    titleKey: "home.focus.training.title",
+    bodyKey: "home.focus.training.body",
+    accent: "violet",
     className: "",
   },
   {
-    title: "System Architecture",
-    body: "分布式系统、Serverless 与设计权衡。",
-    accent: "violet" as const,
+    titleKey: "home.focus.arch.title",
+    bodyKey: "home.focus.arch.body",
+    accent: "violet",
     className: "",
   },
   {
-    title: "Programming",
-    body: "Go / TypeScript 工程实践与工具链。",
-    accent: "cyan" as const,
+    titleKey: "home.focus.programming.title",
+    bodyKey: "home.focus.programming.body",
+    accent: "cyan",
     className: "sm:col-span-2",
   },
 ];
 
 export function FocusBento() {
+  const { t } = useLocale();
+
   return (
     <section className="space-y-6">
       <div>
         <p className="text-sm tracking-[0.18em] text-accent-cyan uppercase">
-          Focus
+          {t("home.focusEyebrow")}
         </p>
         <h2 className="mt-2 text-2xl font-semibold text-text-primary">
-          当前关注方向
+          {t("home.focusTitle")}
         </h2>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
           <div
-            key={item.title}
+            key={item.titleKey}
             className={[
               "rounded-2xl border bg-bg-surface/40 p-5 shadow-[inset_0_1px_0_rgba(243,248,255,0.06)] backdrop-blur-md",
               item.accent === "cyan"
@@ -49,10 +61,10 @@ export function FocusBento() {
             ].join(" ")}
           >
             <h3 className="text-base font-medium text-text-primary">
-              {item.title}
+              {t(item.titleKey)}
             </h3>
             <p className="mt-2 text-sm leading-6 text-text-secondary">
-              {item.body}
+              {t(item.bodyKey)}
             </p>
           </div>
         ))}

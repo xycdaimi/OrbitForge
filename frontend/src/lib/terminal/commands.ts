@@ -1,10 +1,15 @@
+import { translate, type Locale } from "@/lib/i18n/messages";
+
 export type TerminalLine = {
   type: "input" | "output" | "error";
   text: string;
   href?: string;
 };
 
-export function runTerminalCommand(raw: string): TerminalLine[] {
+export function runTerminalCommand(
+  raw: string,
+  locale: Locale = "zh",
+): TerminalLine[] {
   const input = raw.trim().toLowerCase();
   if (!input) {
     return [];
@@ -12,23 +17,38 @@ export function runTerminalCommand(raw: string): TerminalLine[] {
 
   switch (input) {
     case "help":
+      return [{ type: "output", text: translate(locale, "terminal.help") }];
+    case "articles":
       return [
         {
           type: "output",
-          text: "可用命令：help · articles · projects · lab · architecture · clear",
+          text: translate(locale, "terminal.openArticles"),
+          href: "/articles/",
         },
       ];
-    case "articles":
-      return [
-        { type: "output", text: "打开技术文章列表", href: "/articles/" },
-      ];
     case "projects":
-      return [{ type: "output", text: "打开项目列表", href: "/projects/" }];
+      return [
+        {
+          type: "output",
+          text: translate(locale, "terminal.openProjects"),
+          href: "/projects/",
+        },
+      ];
     case "lab":
-      return [{ type: "output", text: "打开 AI Lab", href: "/lab/" }];
+      return [
+        {
+          type: "output",
+          text: translate(locale, "terminal.openLab"),
+          href: "/lab/",
+        },
+      ];
     case "architecture":
       return [
-        { type: "output", text: "打开架构画廊", href: "/architecture/" },
+        {
+          type: "output",
+          text: translate(locale, "terminal.openArchitecture"),
+          href: "/architecture/",
+        },
       ];
     case "clear":
       return [{ type: "output", text: "__CLEAR__" }];
@@ -36,7 +56,7 @@ export function runTerminalCommand(raw: string): TerminalLine[] {
       return [
         {
           type: "error",
-          text: `未知命令：${raw.trim()}。输入 help 查看可用命令。`,
+          text: translate(locale, "terminal.unknown", { cmd: raw.trim() }),
         },
       ];
   }

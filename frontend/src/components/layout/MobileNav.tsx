@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useId, useState } from "react";
 import { cn } from "@/lib/cn";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { isNavItemActive, primaryNav } from "@/lib/navigation";
 
 type MobileNavProps = {
@@ -12,6 +13,7 @@ type MobileNavProps = {
 export function MobileNav({ pathname }: MobileNavProps) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const { t } = useLocale();
 
   useEffect(() => {
     if (!open) {
@@ -41,10 +43,12 @@ export function MobileNav({ pathname }: MobileNavProps) {
         className="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-border-default bg-bg-elevated text-text-primary"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label={open ? "关闭导航菜单" : "打开导航菜单"}
+        aria-label={open ? t("nav.closeMenu") : t("nav.openMenu")}
         onClick={() => setOpen((value) => !value)}
       >
-        <span className="sr-only">{open ? "关闭" : "菜单"}</span>
+        <span className="sr-only">
+          {open ? t("nav.closeMenu") : t("nav.openMenu")}
+        </span>
         <span aria-hidden className="flex flex-col gap-1.5">
           <span
             className={cn(
@@ -72,13 +76,13 @@ export function MobileNav({ pathname }: MobileNavProps) {
           <button
             type="button"
             className="absolute inset-0 bg-bg-primary/80"
-            aria-label="关闭导航遮罩"
+            aria-label={t("nav.closeOverlay")}
             onClick={() => setOpen(false)}
           />
           <nav
             id={panelId}
             className="absolute top-0 right-0 flex h-full w-[min(20rem,85vw)] flex-col gap-2 border-l border-border-default bg-bg-surface p-6 shadow-2xl"
-            aria-label="移动端主导航"
+            aria-label={t("nav.mobile")}
           >
             {primaryNav.map((item) => {
               const active = isNavItemActive(pathname, item.href);
@@ -95,10 +99,7 @@ export function MobileNav({ pathname }: MobileNavProps) {
                   )}
                   onClick={() => setOpen(false)}
                 >
-                  <span className="font-medium">{item.label}</span>
-                  <span className="ml-2 text-sm text-text-secondary">
-                    {item.labelZh}
-                  </span>
+                  <span className="font-medium">{t(item.labelKey)}</span>
                 </Link>
               );
             })}

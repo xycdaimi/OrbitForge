@@ -1,20 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 import {
   runTerminalCommand,
   type TerminalLine,
 } from "@/lib/terminal/commands";
 
 export function LabTerminal() {
-  const [lines, setLines] = useState<TerminalLine[]>([
-    {
-      type: "output",
-      text: "OrbitForge terminal ready. 输入 help 查看命令。这是彩蛋，不是唯一导航入口。",
-    },
-  ]);
+  const { locale, t } = useLocale();
+  const [lines, setLines] = useState<TerminalLine[]>([]);
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    setLines([{ type: "output", text: t("terminal.ready") }]);
+  }, [locale, t]);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -28,7 +29,7 @@ export function LabTerminal() {
       ...lines,
       { type: "input", text: `› ${command}` },
     ];
-    const result = runTerminalCommand(command);
+    const result = runTerminalCommand(command, locale);
     if (result[0]?.text === "__CLEAR__") {
       setLines([]);
       return;
@@ -40,9 +41,9 @@ export function LabTerminal() {
     <section className="rounded-2xl border border-border-default bg-bg-surface/50 p-4 backdrop-blur-md sm:p-5">
       <div className="mb-3 flex items-center justify-between gap-3">
         <p className="text-sm tracking-[0.18em] text-accent-violet uppercase">
-          Terminal
+          {t("terminal.eyebrow")}
         </p>
-        <p className="text-xs text-text-secondary">optional easter egg</p>
+        <p className="text-xs text-text-secondary">{t("terminal.hint")}</p>
       </div>
       <div
         className="h-48 overflow-y-auto rounded-xl border border-border-default bg-bg-primary/80 p-3 font-mono text-sm"
@@ -71,7 +72,7 @@ export function LabTerminal() {
       </div>
       <form onSubmit={onSubmit} className="mt-3 flex gap-2">
         <label className="sr-only" htmlFor="lab-terminal-input">
-          终端命令
+          {t("terminal.label")}
         </label>
         <input
           id="lab-terminal-input"
@@ -86,7 +87,7 @@ export function LabTerminal() {
           type="submit"
           className="rounded-lg border border-border-default px-3 py-2 text-sm text-text-secondary hover:border-accent-cyan/40 hover:text-accent-cyan"
         >
-          Run
+          {t("terminal.run")}
         </button>
       </form>
     </section>

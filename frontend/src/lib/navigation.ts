@@ -1,17 +1,18 @@
+import type { MessageKey } from "@/lib/i18n/messages";
+
 export type NavItem = {
   href: string;
-  label: string;
-  labelZh: string;
+  labelKey: MessageKey;
 };
 
 export const primaryNav: NavItem[] = [
-  { href: "/", label: "Home", labelZh: "首页" },
-  { href: "/articles/", label: "Articles", labelZh: "文章" },
-  { href: "/lab/", label: "AI Lab", labelZh: "实验室" },
-  { href: "/architecture/", label: "Architecture", labelZh: "架构" },
-  { href: "/projects/", label: "Projects", labelZh: "项目" },
-  { href: "/about/", label: "About", labelZh: "关于" },
-  { href: "/search/", label: "Search", labelZh: "搜索" },
+  { href: "/", labelKey: "nav.home" },
+  { href: "/articles/", labelKey: "nav.articles" },
+  { href: "/lab/", labelKey: "nav.lab" },
+  { href: "/architecture/", labelKey: "nav.architecture" },
+  { href: "/projects/", labelKey: "nav.projects" },
+  { href: "/about/", labelKey: "nav.about" },
+  { href: "/search/", labelKey: "nav.search" },
 ];
 
 export function isNavItemActive(pathname: string, href: string): boolean {

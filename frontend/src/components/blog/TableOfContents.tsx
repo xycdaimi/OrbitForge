@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/cn";
-import type { TocItem } from "@/lib/content";
+import type { TocItem } from "@/lib/content/types";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 type TableOfContentsProps = {
   items: TocItem[];
@@ -10,6 +11,7 @@ type TableOfContentsProps = {
 
 export function TableOfContents({ items }: TableOfContentsProps) {
   const [activeId, setActiveId] = useState<string>("");
+  const { t } = useLocale();
 
   useEffect(() => {
     if (items.length === 0) {
@@ -52,9 +54,9 @@ export function TableOfContents({ items }: TableOfContentsProps) {
   }
 
   return (
-    <nav aria-label="文章目录" className="space-y-3">
+    <nav aria-label={t("articles.tocNav")} className="space-y-3">
       <p className="text-xs tracking-[0.18em] text-text-secondary uppercase">
-        On this page
+        {t("articles.onThisPage")}
       </p>
       <ul className="space-y-2 border-l border-border-default">
         {items.map((item) => (

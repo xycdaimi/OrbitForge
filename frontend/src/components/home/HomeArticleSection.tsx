@@ -1,42 +1,43 @@
+"use client";
+
 import Link from "next/link";
 import { ArticleCard } from "@/components/cards/ArticleCard";
-import type { ArticleSource } from "@/lib/content";
+import type { ArticleSource } from "@/lib/content/types";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 type HomeArticleSectionProps = {
-  title: string;
-  eyebrow: string;
+  titleKey: MessageKey;
   articles: ArticleSource[];
   viewAllHref?: string;
 };
 
 export function HomeArticleSection({
-  title,
-  eyebrow,
+  titleKey,
   articles,
   viewAllHref = "/articles/",
 }: HomeArticleSectionProps) {
+  const { t } = useLocale();
+
   return (
     <section className="space-y-6">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <p className="text-sm tracking-[0.18em] text-accent-violet uppercase">
-            {eyebrow}
-          </p>
-          <h2 className="mt-2 text-2xl font-semibold text-text-primary">
-            {title}
+          <h2 className="text-2xl font-semibold text-text-primary">
+            {t(titleKey)}
           </h2>
         </div>
         <Link
           href={viewAllHref}
           className="text-sm text-text-secondary hover:text-accent-cyan"
         >
-          View all
+          {t("home.viewAll")}
         </Link>
       </div>
 
       {articles.length === 0 ? (
         <p className="rounded-2xl border border-border-default bg-bg-surface/60 p-6 text-sm text-text-secondary">
-          暂无文章。
+          {t("home.emptyArticles")}
         </p>
       ) : (
         <div className="grid gap-5">

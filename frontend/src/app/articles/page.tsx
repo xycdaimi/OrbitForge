@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { ArticleCard } from "@/components/cards/ArticleCard";
+import { PageIntro } from "@/components/pages/PageIntro";
+import { ArticlesEmpty } from "@/components/pages/ArticlesEmpty";
 import { getPublishedArticles } from "@/lib/content";
 import { getSiteTitle } from "@/lib/site";
 
@@ -16,22 +18,14 @@ export default function ArticlesPage() {
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <header className="max-w-3xl">
-        <p className="text-sm tracking-[0.18em] text-accent-cyan uppercase">
-          Articles
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold text-text-primary sm:text-4xl">
-          技术文章
-        </h1>
-        <p className="mt-3 text-base text-text-secondary">
-          记录 AI Engineering、系统架构与工程实践中的设计取舍。
-        </p>
-      </header>
+      <PageIntro
+        eyebrowKey="articles.eyebrow"
+        titleKey="articles.title"
+        descriptionKey="articles.description"
+      />
 
       {ordered.length === 0 ? (
-        <p className="mt-12 rounded-2xl border border-border-default bg-bg-surface/60 p-8 text-text-secondary">
-          暂无已发布文章。
-        </p>
+        <ArticlesEmpty />
       ) : (
         <div className="mt-10 grid gap-5">
           {ordered.map((article) => (

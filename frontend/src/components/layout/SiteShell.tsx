@@ -1,3 +1,4 @@
+import { LocaleProvider } from "@/lib/i18n/LocaleProvider";
 import { SiteFooter } from "./SiteFooter";
 import { SiteHeader } from "./SiteHeader";
 
@@ -7,10 +8,12 @@ type SiteShellProps = {
 
 export function SiteShell({ children }: SiteShellProps) {
   return (
-    <div className="flex min-h-full flex-col">
-      <SiteHeader />
-      <div className="flex-1">{children}</div>
-      <SiteFooter />
-    </div>
+    <LocaleProvider>
+      <div className="flex min-h-full flex-col">
+        <SiteHeader />
+        <div className="flex-1">{children}</div>
+        <SiteFooter />
+      </div>
+    </LocaleProvider>
   );
 }

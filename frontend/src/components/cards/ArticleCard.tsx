@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
-import type { ArticleSource } from "@/lib/content";
-import { slugifyTag } from "@/lib/content/tags";
+import { slugifyTag } from "@/lib/content/slugify-tag";
+import type { ArticleSource } from "@/lib/content/types";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 type ArticleCardProps = {
   article: ArticleSource;
@@ -8,6 +11,7 @@ type ArticleCardProps = {
 
 export function ArticleCard({ article }: ArticleCardProps) {
   const { frontmatter, readingTime } = article;
+  const { t } = useLocale();
 
   return (
     <article className="rounded-2xl border border-border-default bg-bg-surface/70 p-6 transition-colors hover:border-accent-cyan/40">
@@ -17,11 +21,11 @@ export function ArticleCard({ article }: ArticleCardProps) {
         </span>
         {frontmatter.featured ? (
           <span className="rounded-md bg-bg-elevated px-2 py-1 text-accent-cyan">
-            Featured
+            {t("articles.featured")}
           </span>
         ) : null}
         <time dateTime={frontmatter.publishedAt}>{frontmatter.publishedAt}</time>
-        <span>{readingTime.minutes} min read</span>
+        <span>{t("articles.minRead", { n: readingTime.minutes })}</span>
       </div>
       <h2 className="mt-3 text-xl font-semibold text-text-primary">
         <Link

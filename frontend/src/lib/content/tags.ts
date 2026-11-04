@@ -1,19 +1,14 @@
 import type { ArticleSource } from "./articles";
 import { getPublishedArticles } from "./articles";
+import { slugifyTag } from "./slugify-tag";
+
+export { slugifyTag } from "./slugify-tag";
 
 export type TagInfo = {
   name: string;
   slug: string;
   count: number;
 };
-
-export function slugifyTag(tag: string): string {
-  return tag
-    .trim()
-    .toLowerCase()
-    .replace(/[^\w\u4e00-\u9fff]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
 
 export function getAllTags(
   articles: ArticleSource[] = getPublishedArticles(),

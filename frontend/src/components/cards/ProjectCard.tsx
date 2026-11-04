@@ -1,4 +1,7 @@
-import type { ProjectSource } from "@/lib/content/projects";
+"use client";
+
+import type { ProjectSource } from "@/lib/content/types";
+import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 type ProjectCardProps = {
   project: ProjectSource;
@@ -6,6 +9,7 @@ type ProjectCardProps = {
 
 export function ProjectCard({ project }: ProjectCardProps) {
   const { frontmatter } = project;
+  const { t } = useLocale();
 
   return (
     <article className="rounded-2xl border border-border-default bg-bg-surface/70 p-6">
@@ -15,7 +19,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </span>
         {frontmatter.example ? (
           <span className="rounded-md bg-bg-elevated px-2 py-1 text-accent-violet">
-            示例
+            {t("projects.example")}
           </span>
         ) : null}
         <time dateTime={frontmatter.publishedAt}>{frontmatter.publishedAt}</time>
@@ -44,7 +48,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
             rel="noopener noreferrer"
             className="text-accent-cyan hover:underline"
           >
-            GitHub
+            {t("nav.github")}
           </a>
         ) : null}
         {frontmatter.demoUrl ? (

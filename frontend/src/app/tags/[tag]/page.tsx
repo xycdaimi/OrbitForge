@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { TagPageView } from "@/components/pages/TagPageView";
 import { getAllTags, getArticlesByTagSlug } from "@/lib/content/tags";
 import { getSiteTitle } from "@/lib/site";
 
@@ -35,30 +34,6 @@ export default async function TagPage({ params }: TagPageProps) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-      <nav className="text-sm text-text-secondary">
-        <Link href="/articles/" className="hover:text-accent-cyan">
-          Articles
-        </Link>
-        <span className="mx-2">/</span>
-        <span>Tags</span>
-      </nav>
-      <header className="mt-4">
-        <p className="text-sm tracking-[0.18em] text-accent-violet uppercase">
-          Tag
-        </p>
-        <h1 className="mt-3 text-3xl font-semibold text-text-primary">
-          {result.tag.name}
-        </h1>
-        <p className="mt-2 text-sm text-text-secondary">
-          {result.articles.length} 篇文章
-        </p>
-      </header>
-      <div className="mt-10 grid gap-5">
-        {result.articles.map((article) => (
-          <ArticleCard key={article.frontmatter.slug} article={article} />
-        ))}
-      </div>
-    </main>
+    <TagPageView tagName={result.tag.name} articles={result.articles} />
   );
 }

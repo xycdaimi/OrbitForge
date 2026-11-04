@@ -1,12 +1,11 @@
-import Link from "next/link";
-import { ProjectCard } from "@/components/cards/ProjectCard";
 import { FocusBento } from "@/components/home/FocusBento";
+import { HomeAboutTeaser } from "@/components/home/HomeAboutTeaser";
 import { HomeArticleSection } from "@/components/home/HomeArticleSection";
 import { HomeHero } from "@/components/home/HomeHero";
+import { HomeProjectsSection } from "@/components/home/HomeProjectsSection";
 import { LabTerminal } from "@/components/home/LabTerminal";
 import { getPublishedArticles } from "@/lib/content";
 import { getPublishedProjects } from "@/lib/content/projects";
-import { siteConfig } from "@/lib/site";
 
 export default function Home() {
   const articles = getPublishedArticles();
@@ -24,60 +23,17 @@ export default function Home() {
       <FocusBento />
 
       <HomeArticleSection
-        eyebrow="Featured"
-        title="精选文章"
+        titleKey="home.featuredTitle"
         articles={featured.length > 0 ? featured : latest.slice(0, 3)}
       />
 
-      <HomeArticleSection
-        eyebrow="Latest"
-        title="最近更新"
-        articles={latest}
-      />
+      <HomeArticleSection titleKey="home.latestTitle" articles={latest} />
 
-      <section className="space-y-6">
-        <div className="flex items-end justify-between gap-4">
-          <div>
-            <p className="text-sm tracking-[0.18em] text-accent-cyan uppercase">
-              Projects
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold text-text-primary">
-              开源与工程实验
-            </h2>
-          </div>
-          <Link
-            href="/projects/"
-            className="text-sm text-text-secondary hover:text-accent-cyan"
-          >
-            View all
-          </Link>
-        </div>
-        <div className="grid gap-5 md:grid-cols-2">
-          {projects.map((project) => (
-            <ProjectCard key={project.frontmatter.slug} project={project} />
-          ))}
-        </div>
-      </section>
+      <HomeProjectsSection projects={projects} />
 
       <LabTerminal />
 
-      <section className="rounded-2xl border border-border-default bg-bg-surface/60 p-6">
-        <p className="text-sm tracking-[0.18em] text-accent-violet uppercase">
-          About
-        </p>
-        <h2 className="mt-2 text-2xl font-semibold text-text-primary">
-          关于 {siteConfig.nameZh}
-        </h2>
-        <p className="mt-3 max-w-3xl text-sm leading-7 text-text-secondary">
-          面向 AI 应用开发与系统架构的个人技术实验室。首页强调辨识度，文章页优先可读性。
-        </p>
-        <Link
-          href="/about/"
-          className="mt-6 inline-flex text-sm text-accent-cyan hover:underline"
-        >
-          了解更多
-        </Link>
-      </section>
+      <HomeAboutTeaser />
     </main>
   );
 }
