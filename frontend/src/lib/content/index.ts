@@ -21,6 +21,13 @@ export {
   type ArticleStatus,
 } from "./schema";
 export {
+  getPublishedProjects,
+  parseProjectSource,
+  projectFrontmatterSchema,
+  type ProjectFrontmatter,
+  type ProjectSource,
+} from "./projects";
+export {
   getAllTags,
   getArticlesByTagSlug,
   slugifyTag,
