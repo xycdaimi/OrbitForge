@@ -1,0 +1,42 @@
+---
+slug: "static-site-serverless-api"
+title: "静态站 + Serverless API 边界"
+description: "OrbitForge 目标部署形态：CloudFront 分发静态页，/api/* 转发到 Go Lambda 与 DynamoDB。"
+status: "published"
+publishedAt: "2026-11-04"
+tags: ["CloudFront", "Lambda", "DynamoDB"]
+---
+
+## 需求与约束
+
+- 文章必须构建期生成，访客请求不依赖数据库。
+- 反馈与反应等动态数据走 `/api/v1/*`。
+- 私有 S3 + CloudFront OAC，不用公开网站托管桶。
+
+## 组件拓扑
+
+```mermaid
+flowchart LR
+  browser[Browser] --> cf[CloudFront]
+  cf -->|static| s3[PrivateS3]
+  cf -->|api| apigw[APIGatewayHTTP]
+  apigw --> lambda[GoLambda]
+  lambda --> ddb[DynamoDB]
+```
+
+## 数据流
+
+1. 作者提交 MDX，CI/本地构建产出 `frontend/out/`。
+2. 同步到私有 S3；CloudFront 默认行为回源 S3。
+3. `/api/*` 有序行为转发 API Gateway，禁用默认缓存。
+4. Lambda 读写 DynamoDB；失败时静态文章仍可阅读。
+
+## 故障路径
+
+- 静态深链依赖 CloudFront Function 补 `index.html`，且不得改写 API 路径。
+- API 4xx/5xx 不应被自定义错误页伪装成 200 HTML。
+
+## 替代方案
+
+- 全站 SSR：运维更重，个人博客收益有限。
+- 仅用托管平台 Server Actions：与「静态优先 + Go API」目标不一致。

@@ -6,6 +6,8 @@ describe("primaryNav", () => {
     expect(primaryNav.map((item) => item.href)).toEqual([
       "/",
       "/articles/",
+      "/lab/",
+      "/architecture/",
       "/projects/",
       "/about/",
       "/search/",

@@ -1,0 +1,14 @@
+{
+  "note": "示例数据，非实测结果。仅用于验证 Lab 曲线展示。",
+  "metric": "loss",
+  "points": [
+    { "step": 1, "value": 2.4 },
+    { "step": 2, "value": 1.9 },
+    { "step": 3, "value": 1.5 },
+    { "step": 4, "value": 1.2 },
+    { "step": 5, "value": 1.0 },
+    { "step": 6, "value": 0.88 },
+    { "step": 7, "value": 0.8 },
+    { "step": 8, "value": 0.74 }
+  ]
+}

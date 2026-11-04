@@ -7,6 +7,8 @@ export type NavItem = {
 export const primaryNav: NavItem[] = [
   { href: "/", label: "Home", labelZh: "首页" },
   { href: "/articles/", label: "Articles", labelZh: "文章" },
+  { href: "/lab/", label: "AI Lab", labelZh: "实验室" },
+  { href: "/architecture/", label: "Architecture", labelZh: "架构" },
   { href: "/projects/", label: "Projects", labelZh: "项目" },
   { href: "/about/", label: "About", labelZh: "关于" },
   { href: "/search/", label: "Search", labelZh: "搜索" },
