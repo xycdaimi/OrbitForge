@@ -1,0 +1,56 @@
+---
+title: "Next.js 静态导出与 trailingSlash：个人博客为何在构建期生成页面"
+slug: "nextjs-static-export-trailing-slash"
+description: "OrbitForge 选择 output: export 与 trailingSlash: true 的原因，以及这对 S3/CloudFront 深链意味着什么。"
+publishedAt: "2026-11-04"
+updatedAt: "2026-11-04"
+status: "published"
+category: "Architecture"
+tags: ["Next.js", "Static Export", "CloudFront"]
+series: "OrbitForge Engineering"
+featured: true
+author: "site-owner"
+---
+
+## 背景 / TL;DR
+
+OrbitForge 前端在 `frontend/next.config.ts` 中启用了：
+
+- `output: "export"`
+- `trailingSlash: true`
+- `images.unoptimized: true`
+
+目标是把公开页面预渲染成可放入私有 S3 + CloudFront 的静态文件，而不是依赖常驻 Node.js 服务。
+
+## 目标与约束
+
+- 文章必须可被搜索引擎直接抓取 HTML。
+- 部署目标是对象存储，而不是 Next.js 服务器。
+- 深链如 `/articles/slug/` 刷新后仍要打开同一篇文章。
+- 不在访客请求时读取 DynamoDB 或调用 Lambda 渲染正文。
+
+## 方案选择
+
+对比过「SSR/ISR + 托管平台」后，个人技术博客的更新频率更适合 **Git 提交 → 构建 → 同步静态产物**。代价是发文需要重新构建；收益是运行时成本低、故障面更小。
+
+`trailingSlash: true` 让导出路径变成 `out/articles/foo/index.html`。配合 CloudFront Function，可以把 `/articles/foo/` 改写成该对象键，避免私有 S3 Origin 对「目录式 URL」返回 403/404。
+
+## 关键实现
+
+当前仓库里：
+
+1. 文章页使用 `generateStaticParams()`，只枚举 `status=published` 的 slug。
+2. 草稿不会进入静态参数，因此不会生成公开 HTML。
+3. `images.unoptimized: true` 避开默认图片优化服务，静态导出才能通过。
+
+构建验收命令是 `npm run build`，并检查 `frontend/out/` 是否包含首页与文章深链对应的 `index.html`。
+
+## 已知问题与权衡
+
+- 没有请求时动态路由；新文章必须重建。
+- CloudFront 的 URI 重写只应挂在静态行为上，绝不能改写 `/api/*`。
+- 自定义域名与证书尚未接入；`NEXT_PUBLIC_SITE_URL` 目前可指向 localhost 或部署后的 CloudFront 域名。
+
+## 总结
+
+静态导出不是「功能阉割」，而是把阅读路径压到构建期。OrbitForge 把动态能力留给 Go Lambda，文章正文继续走 MDX 静态生成。

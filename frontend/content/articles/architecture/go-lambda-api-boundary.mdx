@@ -1,0 +1,75 @@
+---
+title: "Go Lambda API 边界：健康检查、反馈与文章反应"
+slug: "go-lambda-api-boundary"
+description: "OrbitForge 后端只处理动态写读接口；文章 HTML 不依赖 Lambda。本文说明当前 API 契约与本地单测方式。"
+publishedAt: "2026-11-04"
+updatedAt: "2026-11-04"
+status: "published"
+category: "Architecture"
+tags: ["Go", "AWS Lambda", "API"]
+series: "OrbitForge Engineering"
+featured: true
+author: "site-owner"
+---
+
+## 背景 / TL;DR
+
+`backend/` 是面向 API Gateway HTTP API 的 Go 处理程序。当前实现了：
+
+- `GET /api/v1/health`
+- `POST /api/v1/feedback`
+- `GET|POST /api/v1/articles/{slug}/reactions`
+
+文章正文仍来自 MDX 静态导出。Lambda 挂了也不应让读者看不到文章。
+
+## 目标与约束
+
+- Handler 不直接堆业务查询；通过 repository 接口写入。
+- 输入必须校验 slug、长度、枚举与请求体大小。
+- 错误统一为 `{ code, message, requestId }`。
+- 本地 `go test` 不访问真实 AWS。
+
+## 方案选择
+
+首期仓储是内存实现（`internal/repository/memory.go`），方便单测。后续会增加 DynamoDB 实现，并通过环境变量切换，而不是改 Handler。
+
+前端在 `frontend/src/lib/api/` 提供类型与错误解析；页面渲染不依赖这些接口成功。
+
+## 关键实现
+
+路由集中在 `internal/handler/router.go`：
+
+- 未知路径返回 `404 NOT_FOUND`
+- 非法反馈返回 `400 INVALID_ARGUMENT`
+- 反应类型仅允许 `useful` / `insightful`
+
+反应汇总使用原子自增语义（内存版是加锁更新；DynamoDB 版将使用 `UpdateItem` 自增）。
+
+## 实验 / 验证
+
+`backend` 下执行：
+
+```bash
+go test ./...
+go vet ./...
+```
+
+测试使用伪造的 `APIGatewayV2HTTPRequest`，覆盖健康检查、反馈创建、反应计数与非法输入。
+
+可选交叉编译：
+
+```bash
+GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -tags lambda.norpc -o bootstrap ./cmd/api
+```
+
+产物不提交到 Git。
+
+## 已知问题与权衡
+
+- 尚未接入真实限流 / WAF；`localStorage` 不能当防刷。
+- 联系表单与邮件发送未实现。
+- 部署脚本将使用 AWS CLI，而不是 CDK。
+
+## 总结
+
+把「可读的文章」和「可写的反馈」拆开，是 OrbitForge 的核心边界：静态优先保证阅读，Lambda 只在确有运行时状态时出现。

@@ -1,0 +1,61 @@
+---
+title: "MDX Frontmatter、草稿过滤与站内搜索管线"
+slug: "mdx-frontmatter-search-pipeline"
+description: "OrbitForge 如何用 Zod 校验文章元数据、隐藏草稿，并在构建期生成 MiniSearch 索引。"
+publishedAt: "2026-11-04"
+updatedAt: "2026-11-04"
+status: "published"
+category: "Programming"
+tags: ["MDX", "TypeScript", "Search"]
+series: "OrbitForge Engineering"
+featured: true
+author: "site-owner"
+---
+
+## 背景 / TL;DR
+
+文章唯一来源是 `frontend/content/articles/**/*.mdx`。构建期用 `gray-matter` 解析 Frontmatter，用 Zod 校验，再用 MiniSearch 在浏览器里检索标题、摘要和标签。
+
+## 目标与约束
+
+- 缺字段、非法日期、重复 slug 必须让构建失败，而不是静默上线。
+- `status=draft` 与未来日期文章不得进入公开列表、标签页、sitemap 或搜索索引。
+- 不把整篇 MDX 源文件打包给所有访客；搜索只索引必要元数据。
+
+## 方案选择
+
+没有引入 CMS。原因是作者就是开发者，Git 已经提供版本、审核和回滚。Zod schema 定义在 `frontend/src/lib/content/schema.ts`，读取逻辑在 `articles.ts`。
+
+搜索选择 MiniSearch：文章量小，前端索引足够；第一版不部署 Elasticsearch。
+
+## 关键实现
+
+公开文章过滤规则：
+
+1. `status === "published"`
+2. `publishedAt <= 构建日（YYYY-MM-DD）`
+
+标签页通过 `slugifyTag()` 生成稳定 URL，例如 `Distributed Systems` → `/tags/distributed-systems/`。
+
+搜索页把构建期生成的文档数组传给 Client Component；查询为空时不返回全量刷屏，而是提示输入关键词。
+
+## 实验 / 验证
+
+仓库单测覆盖：
+
+- 非法 Frontmatter 抛错
+- 草稿被 `isPublicArticle` 过滤
+- 重复 slug 检测
+- MiniSearch 能按标签词命中
+
+本地命令：`npm run test`。
+
+## 已知问题与权衡
+
+- 中文分词与拼音检索尚未做。
+- 搜索不索引全文，长文细节要靠文章内目录与标题结构。
+- 封面图路径目前可选；真实配图仍待补充。
+
+## 总结
+
+内容管线的价值不在「又写了一个 loader」，而在于把发布规则集中到一处：草稿永远不会因为某页忘记判断而漏出去。
