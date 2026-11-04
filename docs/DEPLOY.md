@@ -36,6 +36,25 @@ pwsh -File infrastructure/cli/deploy.ps1
 
 部署结果写入本地 `infrastructure/cli/state.json`（已 gitignore），终端会打印站点 URL。
 
+## 只发布文章 / 静态页
+
+改 MDX、样式或前端页面时，**不要**再跑完整 `deploy.ps1`。在至少成功执行过一次全量部署后：
+
+```powershell
+powershell -File infrastructure/cli/publish-content.ps1
+```
+
+该脚本会：
+
+1. 读取 `state.json` 中的桶、CloudFront 分发与站点 URL
+2. 构建 `frontend` 并 `s3 sync` 到站点桶
+3. 创建 CloudFront `/*` 失效
+4. 对首页、一篇文章、`/rss.xml` 做烟雾检查
+
+不创建或更新 Lambda、DynamoDB、API Gateway、CloudFront 配置。可选参数：`-SkipBuild`、`-SkipSmoke`、`-SmokeArticleSlug <slug>`。
+
+写作流程详见 [CONTENT_GUIDE.md](./CONTENT_GUIDE.md)。
+
 ## 环境变量（前端）
 
 部署脚本构建前端时临时设置：
