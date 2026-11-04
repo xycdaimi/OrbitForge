@@ -6,7 +6,10 @@ export type { TocItem };
 
 export type ArticleSource = {
   filepath: string;
-  frontmatter: ArticleFrontmatter;
+  frontmatter: ArticleFrontmatter & {
+    cover?: string;
+    series?: string;
+  };
   body: string;
   readingTime: ReadingTime;
 };

@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getPublishedArticles } from "@/lib/content";
 import { getPublishedArchitecture } from "@/lib/content/architecture";
 import { getPublishedExperiments } from "@/lib/content/experiments";
+import { getAllSeries } from "@/lib/content/series";
 import { getAllTags } from "@/lib/content/tags";
 import { absoluteUrl } from "@/lib/site";
 
@@ -34,6 +35,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(),
   }));
 
+  const series = getAllSeries().map((item) => ({
+    url: absoluteUrl(`/series/${item.slug}/`),
+    lastModified: new Date(),
+  }));
+
   const labs = getPublishedExperiments().map((item) => ({
     url: absoluteUrl(`/lab/${item.frontmatter.slug}/`),
     lastModified: new Date(item.frontmatter.publishedAt),
@@ -44,5 +50,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: new Date(item.frontmatter.publishedAt),
   }));
 
-  return [...staticRoutes, ...articles, ...tags, ...labs, ...architectures];
+  return [
+    ...staticRoutes,
+    ...articles,
+    ...tags,
+    ...series,
+    ...labs,
+    ...architectures,
+  ];
 }

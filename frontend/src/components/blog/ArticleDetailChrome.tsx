@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { ContentLocaleNotice } from "@/components/i18n/ContentLocaleNotice";
+import { CoverImage } from "@/components/blog/CoverImage";
 import { MdxContent } from "@/components/blog/MdxContent";
 import { TableOfContents } from "@/components/blog/TableOfContents";
+import { slugifyTag } from "@/lib/content/slugify-tag";
 import type { ArticleSource, TocItem } from "@/lib/content/types";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
@@ -49,10 +51,23 @@ export function ArticleDetailChrome({
           </nav>
 
           <header className="mt-6 border-b border-border-default pb-8">
+            <CoverImage
+              src={frontmatter.cover}
+              alt={t("articles.coverAlt", { title: frontmatter.title })}
+              className="mb-6 max-h-80 w-full rounded-2xl object-cover"
+            />
             <div className="flex flex-wrap gap-2 text-xs text-text-secondary">
               <span className="rounded-md bg-bg-elevated px-2 py-1 text-accent-violet">
                 {frontmatter.category}
               </span>
+              {frontmatter.series ? (
+                <Link
+                  href={`/series/${slugifyTag(frontmatter.series)}/`}
+                  className="rounded-md border border-border-default px-2 py-1 hover:border-accent-cyan/40 hover:text-accent-cyan"
+                >
+                  {t("articles.series")}: {frontmatter.series}
+                </Link>
+              ) : null}
               <time dateTime={frontmatter.publishedAt}>
                 {frontmatter.publishedAt}
               </time>

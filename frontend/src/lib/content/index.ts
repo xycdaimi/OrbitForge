@@ -33,4 +33,10 @@ export {
   slugifyTag,
   type TagInfo,
 } from "./tags";
+export {
+  getAllSeries,
+  getArticlesBySeriesSlug,
+  slugifySeries,
+  type SeriesInfo,
+} from "./series";
 export { extractToc, type TocItem } from "./toc";

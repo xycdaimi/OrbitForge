@@ -90,6 +90,9 @@ export const messages = {
     "articles.neighbors": "相邻文章",
     "articles.breadcrumb": "面包屑",
     "articles.bodyNotice": "正文目前仅为中文。",
+    "articles.series": "系列",
+    "articles.seriesCount": "{n} 篇文章",
+    "articles.coverAlt": "{title} 封面",
 
     "search.eyebrow": "搜索",
     "search.title": "搜索",
@@ -237,6 +240,9 @@ export const messages = {
     "articles.neighbors": "Adjacent articles",
     "articles.breadcrumb": "Breadcrumb",
     "articles.bodyNotice": "Article body is currently Chinese only.",
+    "articles.series": "Series",
+    "articles.seriesCount": "{n} articles",
+    "articles.coverAlt": "Cover for {title}",
 
     "search.eyebrow": "Search",
     "search.title": "Search",
