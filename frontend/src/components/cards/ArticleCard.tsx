@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ArticleSource } from "@/lib/content";
+import { slugifyTag } from "@/lib/content/tags";
 
 type ArticleCardProps = {
   article: ArticleSource;
@@ -35,11 +36,13 @@ export function ArticleCard({ article }: ArticleCardProps) {
       </p>
       <ul className="mt-4 flex flex-wrap gap-2">
         {frontmatter.tags.map((tag) => (
-          <li
-            key={tag}
-            className="rounded-md border border-border-default px-2 py-1 text-xs text-text-secondary"
-          >
-            {tag}
+          <li key={tag}>
+            <Link
+              href={`/tags/${slugifyTag(tag)}/`}
+              className="rounded-md border border-border-default px-2 py-1 text-xs text-text-secondary hover:border-accent-cyan/40 hover:text-accent-cyan"
+            >
+              {tag}
+            </Link>
           </li>
         ))}
       </ul>

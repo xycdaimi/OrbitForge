@@ -20,4 +20,10 @@ export {
   type ArticleFrontmatter,
   type ArticleStatus,
 } from "./schema";
+export {
+  getAllTags,
+  getArticlesByTagSlug,
+  slugifyTag,
+  type TagInfo,
+} from "./tags";
 export { extractToc, type TocItem } from "./toc";
