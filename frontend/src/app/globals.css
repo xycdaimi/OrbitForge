@@ -1,20 +1,54 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070d19;
-  --foreground: #f3f8ff;
+  --bg-primary: #070d19;
+  --bg-surface: #101e32;
+  --bg-elevated: #14283f;
+  --accent-cyan: #38d9f5;
+  --accent-violet: #906bfa;
+  --state-success: #70e2af;
+  --text-primary: #f3f8ff;
+  --text-secondary: #9bb3cb;
+  --border-default: #22364c;
+  --background: var(--bg-primary);
+  --foreground: var(--text-primary);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-violet: var(--accent-violet);
+  --color-state-success: var(--state-success);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-border-default: var(--border-default);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg-primary);
+  color: var(--text-primary);
   font-family: var(--font-sans), "Segoe UI", "PingFang SC", "Microsoft YaHei",
     sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
 }

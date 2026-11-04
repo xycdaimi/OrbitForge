@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { SiteShell } from "@/components/layout/SiteShell";
 import { getSiteTitle, siteConfig } from "@/lib/site";
 import "./globals.css";
 
@@ -28,8 +29,8 @@ export default function RootLayout({
       lang="zh-CN"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-[#070D19] text-[#F3F8FF]">
-        {children}
+      <body className="flex min-h-full flex-col bg-bg-primary text-text-primary">
+        <SiteShell>{children}</SiteShell>
       </body>
     </html>
   );
