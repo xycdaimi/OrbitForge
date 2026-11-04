@@ -2,6 +2,7 @@
   "CallerReference": "__CALLER_REF__",
   "Comment": "OrbitForge static site",
   "Enabled": true,
+  "PriceClass": "PriceClass_All",
   "DefaultRootObject": "index.html",
   "Origins": {
     "Quantity": 2,

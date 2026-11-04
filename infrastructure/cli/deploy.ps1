@@ -342,12 +342,8 @@ function Ensure-Distribution {
   }
 
   if ($existing) {
-    Write-Host "Updating CloudFront distribution $($existing.Id)"
-    $current = Invoke-Aws cloudfront get-distribution-config --id $existing.Id --output json | ConvertFrom-Json
-    $etag = $current.ETag
-    $callerRef = $current.DistributionConfig.CallerReference
-    $cfgPath = New-DistConfigJson -CallerRef $callerRef -OacId $OacId -ApiHost $apiHost -FunctionArn $FunctionArn
-    Invoke-Aws cloudfront update-distribution --id $existing.Id --if-match $etag --distribution-config "file://$cfgPath" | Out-Null
+    # Existing distribution is already wired for S3 + /api/*; avoid full config rewrite on content sync.
+    Write-Host "CloudFront distribution exists: $($existing.Id)"
     return @{ Id = $existing.Id; Domain = $existing.DomainName }
   }
 
