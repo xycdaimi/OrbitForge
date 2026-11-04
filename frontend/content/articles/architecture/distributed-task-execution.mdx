@@ -12,9 +12,11 @@ featured: true
 author: "site-owner"
 ---
 
-# 背景
+这是 OrbitForge 的示例技术文章，用于验证文章详情页的阅读体验：代码高亮、公式与架构图。
 
-这是 OrbitForge 的示例技术文章，用于验证 MDX 内容管线。正文将在后续模块接入代码高亮、Mermaid 与 KaTeX。
+## 背景
+
+个人技术博客需要把异步任务执行的设计取舍讲清楚，而不是只贴一张架构图。
 
 ## 目标与约束
 
@@ -22,9 +24,37 @@ author: "site-owner"
 - Worker 资源隔离
 - 失败可观测、可重试
 
+### 关键指标
+
+可用性优先于极限吞吐。队列积压需要有明确告警阈值。
+
 ## 方案选择
 
 优先考虑队列驱动的任务执行模型，在吞吐与复杂度之间做权衡。
+
+```go
+type Task struct {
+    ID      string
+    Payload []byte
+}
+
+func (w *Worker) Handle(ctx context.Context, task Task) error {
+    return w.executor.Run(ctx, task)
+}
+```
+
+## 架构示意
+
+```mermaid
+flowchart LR
+  api[API] --> queue[Queue]
+  queue --> worker[Worker]
+  worker --> store[Store]
+```
+
+## 简单公式
+
+任务重试退避可以写成 $t = t_0 \cdot 2^{n}$，其中 $n$ 为重试次数。
 
 ## 小结
 

@@ -9,6 +9,10 @@ export {
   type ArticleSource,
   type ParseArticleOptions,
 } from "./articles";
+export {
+  getArticleNeighbors,
+  type ArticleNeighbors,
+} from "./neighbors";
 export { estimateReadingTime, type ReadingTime } from "./reading-time";
 export {
   articleFrontmatterSchema,
@@ -16,3 +20,4 @@ export {
   type ArticleFrontmatter,
   type ArticleStatus,
 } from "./schema";
+export { extractToc, type TocItem } from "./toc";
