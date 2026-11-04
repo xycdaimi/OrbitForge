@@ -25,4 +25,12 @@
 | `GET` | `/api/v1/articles/{slug}/reactions` | 反应汇总 |
 | `POST` | `/api/v1/articles/{slug}/reactions` | 提交反应（`useful` / `insightful`） |
 
-仓储默认使用内存实现，便于本地单元测试；DynamoDB 实现后置。
+仓储默认使用内存实现（`REPOSITORY` 未设置或非 `dynamodb`）。生产可设置：
+
+```text
+REPOSITORY=dynamodb
+FEEDBACK_TABLE=OrbitForgeFeedback
+REACTIONS_TABLE=OrbitForgeReactions
+```
+
+DynamoDB 实现通过可注入的 client 接口编写，单元测试不访问真实 AWS。
