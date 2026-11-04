@@ -1,0 +1,31 @@
+---
+title: "分布式任务执行系统的设计与权衡"
+slug: "distributed-task-execution"
+description: "从异步任务、资源隔离、可靠性和可观测性讨论架构设计。"
+publishedAt: "2026-11-04"
+updatedAt: "2026-11-04"
+status: "published"
+category: "Architecture"
+tags: ["Go", "Distributed Systems", "Queue"]
+series: "Engineering Architecture"
+featured: true
+author: "site-owner"
+---
+
+# 背景
+
+这是 OrbitForge 的示例技术文章，用于验证 MDX 内容管线。正文将在后续模块接入代码高亮、Mermaid 与 KaTeX。
+
+## 目标与约束
+
+- 任务可异步执行
+- Worker 资源隔离
+- 失败可观测、可重试
+
+## 方案选择
+
+优先考虑队列驱动的任务执行模型，在吞吐与复杂度之间做权衡。
+
+## 小结
+
+本文件为已发布示例；真实文章内容由站点作者后续撰写。
