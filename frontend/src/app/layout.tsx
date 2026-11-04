@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SiteShell } from "@/components/layout/SiteShell";
-import { getSiteTitle, siteConfig } from "@/lib/site";
+import { absoluteUrl, getSiteTitle, siteConfig } from "@/lib/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -15,8 +15,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(absoluteUrl("/")),
   title: getSiteTitle(),
   description: siteConfig.description,
+  alternates: {
+    canonical: "/",
+    types: {
+      "application/rss+xml": "/rss.xml",
+    },
+  },
+  openGraph: {
+    title: getSiteTitle(),
+    description: siteConfig.description,
+    siteName: siteConfig.name,
+    locale: "zh_CN",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

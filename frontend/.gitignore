@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# generated at build time
+/public/rss.xml
+
 # production
 /build
 

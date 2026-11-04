@@ -23,7 +23,9 @@ export function SiteFooter() {
           <Link href="/about/" className="hover:text-accent-cyan">
             About
           </Link>
-          <span className="text-text-secondary/70">RSS 将在 SEO 模块提供</span>
+          <a href="/rss.xml" className="hover:text-accent-cyan">
+            RSS
+          </a>
         </div>
       </div>
       <div className="border-t border-border-default/70">

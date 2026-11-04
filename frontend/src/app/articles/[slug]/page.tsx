@@ -9,7 +9,8 @@ import {
   getArticleNeighbors,
   getPublishedArticles,
 } from "@/lib/content";
-import { getSiteTitle } from "@/lib/site";
+import { buildArticleJsonLd } from "@/lib/seo/jsonld";
+import { absoluteUrl, getSiteTitle } from "@/lib/site";
 import "katex/dist/katex.min.css";
 
 type ArticlePageProps = {
@@ -34,6 +35,15 @@ export async function generateMetadata({
   return {
     title: getSiteTitle(article.frontmatter.title),
     description: article.frontmatter.description,
+    alternates: {
+      canonical: absoluteUrl(`/articles/${article.frontmatter.slug}/`),
+    },
+    openGraph: {
+      title: article.frontmatter.title,
+      description: article.frontmatter.description,
+      type: "article",
+      url: absoluteUrl(`/articles/${article.frontmatter.slug}/`),
+    },
   };
 }
 
@@ -47,9 +57,14 @@ export default async function ArticlePage({ params }: ArticlePageProps) {
   const toc = extractToc(article.body);
   const neighbors = getArticleNeighbors(getPublishedArticles(), slug);
   const { frontmatter, body, readingTime } = article;
+  const jsonLd = buildArticleJsonLd(article);
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_16rem]">
         <article className="min-w-0">
           <nav className="text-sm text-text-secondary" aria-label="面包屑">
