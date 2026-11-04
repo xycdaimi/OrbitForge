@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "generate:rss": "tsx scripts/generate-rss.ts"
+    "generate:rss": "tsx scripts/generate-rss.ts",
+    "new:article": "tsx scripts/new-article.ts"
   },
   "dependencies": {
     "github-slugger": "^2.0.0",

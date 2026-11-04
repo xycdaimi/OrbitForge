@@ -12,8 +12,8 @@
 
 **`AI Engineering` · `Machine Learning` · `Distributed Systems` · `System Architecture` · `Creative Coding`**
 
-> 🚧 **Project Status: Planning / Early Development**  
-> 项目正在规划与初始化中。以下功能与技术方案为开发目标，不代表当前仓库已全部实现或部署上线。
+> 🚧 **Project Status: MVP in progress**  
+> 静态博客核心、内容管线与 AWS CLI 部署已可用。About / 社交链接等仍有占位；自定义域名与 GitHub Actions 尚未接入。
 
 </div>
 
@@ -125,19 +125,27 @@ orbitforge/
 
 ## 🚀 Getting Started
 
-目前仍处于项目初始化阶段，**尚未提供保证可执行的一键启动步骤**。
-
-前端脚手架落地后，预计采用以下本地开发流程：
-
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-然后访问 `http://localhost:3000`。
+访问 `http://localhost:3000`。
 
-**注意：** 以上命令是计划采用的开发方式，需在 `frontend/` 和对应 `package.json` 创建后才能使用。Go 后端、AWS 环境及部署脚本会在相应开发阶段补充独立文档。
+### 如何发布一篇文章
+
+1. 新建草稿：`npm run new:article -- --title "文章标题" --category Programming`
+2. 编辑 `frontend/content/articles/` 下生成的 MDX，本地 `npm run dev` 预览
+3. 将 frontmatter 中 `status` 改为 `published`
+4. `npm run build` 确认通过
+5. 仓库根目录执行内容同步（不部署 Lambda）：
+
+```powershell
+powershell -File infrastructure/cli/publish-content.ps1
+```
+
+完整字段约定与发布 SOP 见 [docs/CONTENT_GUIDE.md](docs/CONTENT_GUIDE.md)。基础设施全量部署见 [docs/DEPLOY.md](docs/DEPLOY.md)。
 
 ## 🗺️ Roadmap
 
