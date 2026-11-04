@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { StarfieldLazy } from "@/components/effects/StarfieldLazy";
 import { siteConfig } from "@/lib/site";
 
 const focusTags = [
@@ -19,6 +20,7 @@ export function HomeHero() {
         aria-hidden
         className="pointer-events-none absolute inset-0 opacity-30 [background-image:linear-gradient(rgba(34,54,76,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(34,54,76,0.35)_1px,transparent_1px)] [background-size:28px_28px]"
       />
+      <StarfieldLazy />
 
       <div className="relative max-w-3xl">
         <p className="text-sm tracking-[0.22em] text-accent-cyan uppercase">
