@@ -8,6 +8,7 @@ import { isNavItemActive, primaryNav } from "@/lib/navigation";
 import { siteConfig } from "@/lib/site";
 import { LocaleToggle } from "./LocaleToggle";
 import { MobileNav } from "./MobileNav";
+import { StudioNavLink } from "@/components/auth/StudioNavLink";
 
 export function SiteHeader() {
   const pathname = usePathname() || "/";
@@ -54,6 +55,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <StudioNavLink />
           <LocaleToggle />
           <a
             href="https://github.com/"

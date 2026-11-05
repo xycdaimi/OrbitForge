@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"orbitforge/backend/internal/handler"
+	"orbitforge/backend/internal/middleware"
 	"orbitforge/backend/internal/repository"
 	"orbitforge/backend/internal/service"
 )
@@ -27,6 +28,20 @@ func main() {
 		service.NewReactionService(reactionRepo),
 		docs,
 	)
+	if poolID := strings.TrimSpace(os.Getenv("COGNITO_USER_POOL_ID")); poolID != "" {
+		region := strings.TrimSpace(os.Getenv("AWS_REGION"))
+		if region == "" {
+			region = strings.TrimSpace(os.Getenv("AWS_DEFAULT_REGION"))
+		}
+		if region == "" {
+			region = "us-west-2"
+		}
+		api.SetAuthorizer(middleware.NewCognitoAuthorizer(
+			region,
+			poolID,
+			strings.TrimSpace(os.Getenv("COGNITO_CLIENT_ID")),
+		))
+	}
 	lambda.Start(api.Handle)
 }
 
