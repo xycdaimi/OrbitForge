@@ -591,8 +591,8 @@ function Ensure-CodeBuild {
 
   $prev = $ErrorActionPreference
   $ErrorActionPreference = "Continue"
-  aws codebuild batch-get-projects --names $OrbitForgeConfig.CodeBuildProject --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region --query "projects[0].name" --output text 1>$null 2>$null
-  $exists = ($LASTEXITCODE -eq 0)
+  $projectName = aws codebuild batch-get-projects --names $OrbitForgeConfig.CodeBuildProject --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region --query "projects[0].name" --output text 2>$null
+  $exists = ($projectName -eq $OrbitForgeConfig.CodeBuildProject)
   $ErrorActionPreference = $prev
   if (-not $exists) {
     Invoke-Aws codebuild create-project `
@@ -614,7 +614,7 @@ function Ensure-CodeBuild {
 
 function Update-LambdaStudioConfig {
   param($Cognito)
-  $envVars = "Variables={REPOSITORY=dynamodb,FEEDBACK_TABLE=$($OrbitForgeConfig.FeedbackTable),REACTIONS_TABLE=$($OrbitForgeConfig.ReactionsTable),CONTENT_BUCKET=$contentBucket,CODEBUILD_PROJECT=$($OrbitForgeConfig.CodeBuildProject),COGNITO_USER_POOL_ID=$($Cognito.PoolId),COGNITO_CLIENT_ID=$($Cognito.ClientId),AWS_REGION=$($OrbitForgeConfig.Region)}"
+  $envVars = "Variables={REPOSITORY=dynamodb,FEEDBACK_TABLE=$($OrbitForgeConfig.FeedbackTable),REACTIONS_TABLE=$($OrbitForgeConfig.ReactionsTable),CONTENT_BUCKET=$contentBucket,CODEBUILD_PROJECT=$($OrbitForgeConfig.CodeBuildProject),COGNITO_USER_POOL_ID=$($Cognito.PoolId),COGNITO_CLIENT_ID=$($Cognito.ClientId)}"
   Invoke-Aws lambda update-function-configuration --function-name $OrbitForgeConfig.LambdaName --environment $envVars | Out-Null
   Invoke-Aws lambda wait function-updated --function-name $OrbitForgeConfig.LambdaName
 }
