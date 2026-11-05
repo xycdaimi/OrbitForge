@@ -3,6 +3,8 @@ phases:
   build:
     commands:
       - aws s3 sync "s3://${CONTENT_BUCKET}/published" ./published-export
+      - rm -rf frontend/content/articles
+      - mkdir -p frontend/content/articles
       - node frontend/scripts/materialize-published.mjs ./published-export frontend/content/articles
       - cd frontend && npm ci && npm run build
       - aws s3 sync frontend/out "s3://${SITE_BUCKET}" --delete

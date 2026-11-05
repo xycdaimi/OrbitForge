@@ -21,6 +21,7 @@ $env:AWS_DEFAULT_REGION = $OrbitForgeConfig.Region
 Write-Host "Using profile=$($OrbitForgeConfig.Profile) region=$($OrbitForgeConfig.Region)"
 $accountId = Get-AwsAccountId
 $siteBucket = "$($OrbitForgeConfig.SiteBucketPrefix)-$accountId-$($OrbitForgeConfig.Region)"
+$contentBucket = "$($OrbitForgeConfig.ContentBucketPrefix)-$accountId-$($OrbitForgeConfig.Region)"
 $state = Read-DeployState
 $state.AccountId = $accountId
 $state.Region = $OrbitForgeConfig.Region
@@ -88,6 +89,19 @@ function Ensure-LambdaRole {
         "arn:aws:dynamodb:$($OrbitForgeConfig.Region):${accountId}:table/$($OrbitForgeConfig.FeedbackTable)",
         "arn:aws:dynamodb:$($OrbitForgeConfig.Region):${accountId}:table/$($OrbitForgeConfig.ReactionsTable)"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"],
+      "Resource": [
+        "arn:aws:s3:::$contentBucket",
+        "arn:aws:s3:::$contentBucket/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["codebuild:StartBuild", "codebuild:BatchGetBuilds"],
+      "Resource": "arn:aws:codebuild:$($OrbitForgeConfig.Region):${accountId}:project/$($OrbitForgeConfig.CodeBuildProject)"
     }
   ]
 }
@@ -165,8 +179,13 @@ function Ensure-HttpApi {
     $api = Invoke-Aws apigatewayv2 create-api `
       --name $OrbitForgeConfig.HttpApiName `
       --protocol-type HTTP `
-      --cors-configuration "AllowOrigins=*,AllowMethods=GET,POST,OPTIONS,AllowHeaders=content-type" `
+      --cors-configuration "AllowOrigins=*,AllowMethods=GET,POST,PUT,OPTIONS,AllowHeaders=content-type,authorization" `
       --output json | ConvertFrom-Json
+  }
+  else {
+    Invoke-Aws apigatewayv2 update-api `
+      --api-id $api.ApiId `
+      --cors-configuration "AllowOrigins=*,AllowMethods=GET,POST,PUT,OPTIONS,AllowHeaders=content-type,authorization" | Out-Null
   }
   $apiId = $api.ApiId
 
@@ -191,7 +210,11 @@ function Ensure-HttpApi {
     "GET /api/v1/health",
     "POST /api/v1/feedback",
     "GET /api/v1/articles/{slug}/reactions",
-    "POST /api/v1/articles/{slug}/reactions"
+    "POST /api/v1/articles/{slug}/reactions",
+    "GET /api/v1/studio/documents",
+    "POST /api/v1/studio/documents",
+    "POST /api/v1/studio/media",
+    "ANY /api/v1/studio/{proxy+}"
   )
   $routes = Invoke-Aws apigatewayv2 get-routes --api-id $apiId --output json | ConvertFrom-Json
   foreach ($routeKey in $routesNeeded) {
@@ -389,6 +412,8 @@ function Sync-Frontend {
     try {
       $env:NEXT_PUBLIC_SITE_URL = $SiteUrl
       $env:NEXT_PUBLIC_API_BASE_URL = "/api/v1"
+      if ($state.CognitoDomain) { $env:NEXT_PUBLIC_COGNITO_DOMAIN = $state.CognitoDomain }
+      if ($state.CognitoClientId) { $env:NEXT_PUBLIC_COGNITO_CLIENT_ID = $state.CognitoClientId }
       npm run build
       if ($LASTEXITCODE -ne 0) { throw "frontend build failed" }
     }
@@ -406,6 +431,194 @@ function Sync-Frontend {
   Invoke-Aws cloudfront create-invalidation --distribution-id $DistributionId --paths "/*" | Out-Null
 }
 
+function Ensure-PrivateBucket {
+  param([string]$Bucket)
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  aws s3api head-bucket --bucket $Bucket --profile $OrbitForgeConfig.Profile 1>$null 2>$null
+  $missing = ($LASTEXITCODE -ne 0)
+  $ErrorActionPreference = $prev
+  if ($missing) {
+    Write-Host "Creating private bucket $Bucket"
+    if ($OrbitForgeConfig.Region -eq "us-east-1") {
+      Invoke-Aws s3api create-bucket --bucket $Bucket | Out-Null
+    }
+    else {
+      Invoke-Aws s3api create-bucket --bucket $Bucket --create-bucket-configuration "LocationConstraint=$($OrbitForgeConfig.Region)" | Out-Null
+    }
+  }
+  Invoke-Aws s3api put-public-access-block --bucket $Bucket --public-access-block-configuration "BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true" | Out-Null
+}
+
+function Ensure-Cognito {
+  param([string]$CallbackUrl)
+  $pools = Invoke-Aws cognito-idp list-user-pools --max-results 60 --output json | ConvertFrom-Json
+  $pool = $pools.UserPools | Where-Object { $_.Name -eq $OrbitForgeConfig.CognitoPoolName } | Select-Object -First 1
+  if (-not $pool) {
+    Write-Host "Creating Cognito user pool"
+    $pool = Invoke-Aws cognito-idp create-user-pool `
+      --pool-name $OrbitForgeConfig.CognitoPoolName `
+      --admin-create-user-config "AllowAdminCreateUserOnly=true" `
+      --username-attributes email `
+      --output json | ConvertFrom-Json
+    $poolId = $pool.UserPool.Id
+  }
+  else {
+    $poolId = $pool.Id
+  }
+  $clients = Invoke-Aws cognito-idp list-user-pool-clients --user-pool-id $poolId --output json | ConvertFrom-Json
+  $client = $clients.UserPoolClients | Where-Object { $_.ClientName -eq "orbitforge-studio" } | Select-Object -First 1
+  if (-not $client) {
+    $client = Invoke-Aws cognito-idp create-user-pool-client `
+      --user-pool-id $poolId `
+      --client-name orbitforge-studio `
+      --no-generate-secret `
+      --allowed-o-auth-flows-user-pool-client `
+      --allowed-o-auth-flows implicit `
+      --allowed-o-auth-scopes openid email `
+      --callback-urls $CallbackUrl `
+      --logout-urls $CallbackUrl `
+      --supported-identity-providers COGNITO `
+      --output json | ConvertFrom-Json
+    $clientId = $client.UserPoolClient.ClientId
+  }
+  else {
+    $clientId = $client.ClientId
+    Invoke-Aws cognito-idp update-user-pool-client `
+      --user-pool-id $poolId `
+      --client-id $clientId `
+      --client-name orbitforge-studio `
+      --allowed-o-auth-flows-user-pool-client `
+      --allowed-o-auth-flows implicit `
+      --allowed-o-auth-scopes openid email `
+      --callback-urls $CallbackUrl `
+      --logout-urls $CallbackUrl `
+      --supported-identity-providers COGNITO | Out-Null
+  }
+  $domainPrefix = "orbitforge-$accountId"
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  aws cognito-idp describe-user-pool-domain --domain $domainPrefix --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region 1>$null 2>$null
+  $domainMissing = ($LASTEXITCODE -ne 0)
+  $ErrorActionPreference = $prev
+  if ($domainMissing) {
+    Invoke-Aws cognito-idp create-user-pool-domain --user-pool-id $poolId --domain $domainPrefix | Out-Null
+  }
+  $email = $env:ORBITFORGE_AUTHOR_EMAIL
+  $password = $env:ORBITFORGE_AUTHOR_PASSWORD
+  if ($email -and $password) {
+    $prev = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    aws cognito-idp admin-get-user --user-pool-id $poolId --username $email --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region 1>$null 2>$null
+    $userMissing = ($LASTEXITCODE -ne 0)
+    $ErrorActionPreference = $prev
+    if ($userMissing) {
+      Invoke-Aws cognito-idp admin-create-user `
+        --user-pool-id $poolId `
+        --username $email `
+        --user-attributes "Name=email,Value=$email" "Name=email_verified,Value=true" `
+        --message-action SUPPRESS | Out-Null
+    }
+    Invoke-Aws cognito-idp admin-set-user-password `
+      --user-pool-id $poolId `
+      --username $email `
+      --password $password `
+      --permanent | Out-Null
+    Write-Host "Author user ready: $email"
+  }
+  else {
+    Write-Host "ORBITFORGE_AUTHOR_EMAIL / ORBITFORGE_AUTHOR_PASSWORD not set; pool created without a user"
+  }
+  $domain = "$domainPrefix.auth.$($OrbitForgeConfig.Region).amazoncognito.com"
+  return @{ PoolId = $poolId; ClientId = $clientId; Domain = $domain }
+}
+
+function Ensure-CodeBuild {
+  param([string]$DistributionId)
+  $roleName = $OrbitForgeConfig.CodeBuildRoleName
+  $roleArn = "arn:aws:iam::${accountId}:role/$roleName"
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  aws iam get-role --role-name $roleName --profile $OrbitForgeConfig.Profile 1>$null 2>$null
+  $roleMissing = ($LASTEXITCODE -ne 0)
+  $ErrorActionPreference = $prev
+  if ($roleMissing) {
+    $trust = '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"codebuild.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+    $trustPath = Join-Path $workDir "codebuild-trust.json"
+    [System.IO.File]::WriteAllText($trustPath, $trust, (New-Object System.Text.UTF8Encoding $false))
+    Invoke-Aws iam create-role --role-name $roleName --assume-role-policy-document "file://$trustPath" | Out-Null
+    Start-Sleep -Seconds 8
+  }
+  $policy = @"
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
+      "Resource": "arn:aws:logs:$($OrbitForgeConfig.Region):${accountId}:log-group:/aws/codebuild/$($OrbitForgeConfig.CodeBuildProject):*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::$contentBucket", "arn:aws:s3:::$contentBucket/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::$siteBucket", "arn:aws:s3:::$siteBucket/*"]
+    },
+    {
+      "Effect": "Allow",
+      "Action": ["cloudfront:CreateInvalidation"],
+      "Resource": "arn:aws:cloudfront::${accountId}:distribution/$DistributionId"
+    }
+  ]
+}
+"@
+  $policyPath = Join-Path $workDir "codebuild-policy.json"
+  [System.IO.File]::WriteAllText($policyPath, $policy, (New-Object System.Text.UTF8Encoding $false))
+  Invoke-Aws iam put-role-policy --role-name $roleName --policy-name orbitforge-publish-inline --policy-document "file://$policyPath" | Out-Null
+
+  $stage = Join-Path $workDir "source"
+  if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
+  New-Item -ItemType Directory -Force -Path $stage | Out-Null
+  robocopy $repoRoot $stage /E /NFL /NDL /NJH /NJS /XD node_modules .git out .work .next | Out-Null
+  $zip = Join-Path $workDir "codebuild-source.zip"
+  if (Test-Path $zip) { Remove-Item $zip -Force }
+  Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -Force
+  Invoke-Aws s3 cp $zip "s3://$contentBucket/codebuild/source.zip"
+
+  $prev = $ErrorActionPreference
+  $ErrorActionPreference = "Continue"
+  aws codebuild batch-get-projects --names $OrbitForgeConfig.CodeBuildProject --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region --query "projects[0].name" --output text 1>$null 2>$null
+  $exists = ($LASTEXITCODE -eq 0)
+  $ErrorActionPreference = $prev
+  if (-not $exists) {
+    Invoke-Aws codebuild create-project `
+      --name $OrbitForgeConfig.CodeBuildProject `
+      --source "type=S3,location=$contentBucket/codebuild/source.zip,buildspec=infrastructure/codebuild/buildspec.yml" `
+      --artifacts "type=NO_ARTIFACTS" `
+      --environment "type=LINUX_CONTAINER,image=aws/codebuild/standard:7.0,computeType=BUILD_GENERAL1_SMALL,environmentVariables=[{name=CONTENT_BUCKET,value=$contentBucket},{name=SITE_BUCKET,value=$siteBucket},{name=DISTRIBUTION_ID,value=$DistributionId}]" `
+      --service-role $roleArn | Out-Null
+  }
+  else {
+    Invoke-Aws codebuild update-project `
+      --name $OrbitForgeConfig.CodeBuildProject `
+      --source "type=S3,location=$contentBucket/codebuild/source.zip,buildspec=infrastructure/codebuild/buildspec.yml" `
+      --environment "type=LINUX_CONTAINER,image=aws/codebuild/standard:7.0,computeType=BUILD_GENERAL1_SMALL,environmentVariables=[{name=CONTENT_BUCKET,value=$contentBucket},{name=SITE_BUCKET,value=$siteBucket},{name=DISTRIBUTION_ID,value=$DistributionId}]" `
+      --service-role $roleArn | Out-Null
+  }
+  Write-Host "CodeBuild project $($OrbitForgeConfig.CodeBuildProject) source uploaded"
+}
+
+function Update-LambdaStudioConfig {
+  param($Cognito)
+  $envVars = "Variables={REPOSITORY=dynamodb,FEEDBACK_TABLE=$($OrbitForgeConfig.FeedbackTable),REACTIONS_TABLE=$($OrbitForgeConfig.ReactionsTable),CONTENT_BUCKET=$contentBucket,CODEBUILD_PROJECT=$($OrbitForgeConfig.CodeBuildProject),COGNITO_USER_POOL_ID=$($Cognito.PoolId),COGNITO_CLIENT_ID=$($Cognito.ClientId),AWS_REGION=$($OrbitForgeConfig.Region)}"
+  Invoke-Aws lambda update-function-configuration --function-name $OrbitForgeConfig.LambdaName --environment $envVars | Out-Null
+  Invoke-Aws lambda wait function-updated --function-name $OrbitForgeConfig.LambdaName
+}
+
 # ---- main flow ----
 Ensure-DynamoTable -TableName $OrbitForgeConfig.FeedbackTable -HashKey "feedbackId"
 Ensure-DynamoTable -TableName $OrbitForgeConfig.ReactionsTable -HashKey "articleSlug"
@@ -421,6 +634,14 @@ $distArn = "arn:aws:cloudfront::${accountId}:distribution/$($dist.Id)"
 Set-BucketPolicyForOac -DistributionArn $distArn
 
 $siteUrl = "https://$($dist.Domain)"
+Ensure-PrivateBucket -Bucket $contentBucket
+Ensure-CodeBuild -DistributionId $dist.Id
+$cognito = Ensure-Cognito -CallbackUrl "$siteUrl/studio/"
+Update-LambdaStudioConfig -Cognito $cognito
+$state.ContentBucket = $contentBucket
+$state.CognitoPoolId = $cognito.PoolId
+$state.CognitoClientId = $cognito.ClientId
+$state.CognitoDomain = "https://$($cognito.Domain)"
 Sync-Frontend -SiteUrl $siteUrl -DistributionId $dist.Id
 
 $state.LambdaArn = $lambdaArn
