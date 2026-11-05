@@ -5,6 +5,7 @@ import { useEffect, useId, useState } from "react";
 import { cn } from "@/lib/cn";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 import { isNavItemActive, primaryNav } from "@/lib/navigation";
+import { StudioNavLink } from "@/components/auth/StudioNavLink";
 
 type MobileNavProps = {
   pathname: string;
@@ -103,6 +104,10 @@ export function MobileNav({ pathname }: MobileNavProps) {
                 </Link>
               );
             })}
+            <StudioNavLink
+              className="rounded-lg px-3 py-3 text-base text-text-secondary hover:bg-bg-elevated hover:text-text-primary"
+              onNavigate={() => setOpen(false)}
+            />
           </nav>
         </div>
       ) : null}

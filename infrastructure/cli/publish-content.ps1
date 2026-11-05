@@ -39,6 +39,8 @@ if (-not $SkipBuild) {
   try {
     $env:NEXT_PUBLIC_SITE_URL = $siteUrl
     $env:NEXT_PUBLIC_API_BASE_URL = "/api/v1"
+    if ($state.CognitoDomain) { $env:NEXT_PUBLIC_COGNITO_DOMAIN = $state.CognitoDomain }
+    if ($state.CognitoClientId) { $env:NEXT_PUBLIC_COGNITO_CLIENT_ID = $state.CognitoClientId }
     npm run build
     if ($LASTEXITCODE -ne 0) { throw "frontend build failed" }
   }
