@@ -8,13 +8,16 @@ export function LoginPage() {
   const [href, setHref] = useState("");
 
   useEffect(() => {
-    const domain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN?.replace(/\/$/, "");
+    const rawDomain = process.env.NEXT_PUBLIC_COGNITO_DOMAIN?.trim().replace(/\/$/, "") ?? "";
     const clientID = process.env.NEXT_PUBLIC_COGNITO_CLIENT_ID;
-    if (!domain || !clientID) {
+    if (!rawDomain || !clientID) {
       return;
     }
+    const origin = rawDomain.startsWith("https://") || rawDomain.startsWith("http://")
+      ? rawDomain
+      : `https://${rawDomain}`;
     const redirect = `${window.location.origin}/`;
-    const url = new URL(`https://${domain}/login`);
+    const url = new URL(`${origin}/login`);
     url.searchParams.set("client_id", clientID);
     url.searchParams.set("response_type", "token");
     url.searchParams.set("scope", "openid email");
