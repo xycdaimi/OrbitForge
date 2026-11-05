@@ -498,8 +498,8 @@ function Ensure-Cognito {
   $domainPrefix = "orbitforge-$accountId"
   $prev = $ErrorActionPreference
   $ErrorActionPreference = "Continue"
-  aws cognito-idp describe-user-pool-domain --domain $domainPrefix --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region 1>$null 2>$null
-  $domainMissing = ($LASTEXITCODE -ne 0)
+  $domainStatus = aws cognito-idp describe-user-pool-domain --domain $domainPrefix --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region --query "DomainDescription.Status" --output text 2>$null
+  $domainMissing = ($domainStatus -ne "ACTIVE" -and $domainStatus -ne "CREATING")
   $ErrorActionPreference = $prev
   if ($domainMissing) {
     Invoke-Aws cognito-idp create-user-pool-domain --user-pool-id $poolId --domain $domainPrefix | Out-Null
