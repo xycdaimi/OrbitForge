@@ -25,7 +25,6 @@ export const messages = {
     "nav.closeMenu": "关闭导航菜单",
     "nav.closeOverlay": "关闭导航遮罩",
     "nav.github": "GitHub",
-    "nav.login": "登录",
     "nav.studio": "写稿",
 
     "locale.zh": "中文",
@@ -174,7 +173,6 @@ export const messages = {
     "nav.closeMenu": "Close navigation menu",
     "nav.closeOverlay": "Close navigation overlay",
     "nav.github": "GitHub",
-    "nav.login": "Log in",
     "nav.studio": "Write",
 
     "locale.zh": "中文",

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { readAuthorToken } from "@/components/auth/LoginPage";
+import { readAuthorToken, storeTokenFromHash } from "@/components/auth/LoginPage";
 import { useLocale } from "@/lib/i18n/LocaleProvider";
 
 export function StudioNavLink({
@@ -16,15 +16,12 @@ export function StudioNavLink({
   const [authed, setAuthed] = useState(false);
 
   useEffect(() => {
+    storeTokenFromHash();
     setAuthed(readAuthorToken().length > 0);
   }, []);
 
   if (!authed) {
-    return (
-      <Link href="/login/" className={className} onClick={onNavigate}>
-        {t("nav.login")}
-      </Link>
-    );
+    return null;
   }
 
   return (

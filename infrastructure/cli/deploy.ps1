@@ -451,7 +451,7 @@ function Ensure-PrivateBucket {
 }
 
 function Ensure-Cognito {
-  param([string]$CallbackUrl)
+  param([string[]]$CallbackUrls)
   $pools = Invoke-Aws cognito-idp list-user-pools --max-results 60 --output json | ConvertFrom-Json
   $pool = $pools.UserPools | Where-Object { $_.Name -eq $OrbitForgeConfig.CognitoPoolName } | Select-Object -First 1
   if (-not $pool) {
@@ -476,8 +476,8 @@ function Ensure-Cognito {
       --allowed-o-auth-flows-user-pool-client `
       --allowed-o-auth-flows implicit `
       --allowed-o-auth-scopes openid email `
-      --callback-urls $CallbackUrl `
-      --logout-urls $CallbackUrl `
+      --callback-urls $CallbackUrls `
+      --logout-urls $CallbackUrls `
       --supported-identity-providers COGNITO `
       --output json | ConvertFrom-Json
     $clientId = $client.UserPoolClient.ClientId
@@ -491,8 +491,8 @@ function Ensure-Cognito {
       --allowed-o-auth-flows-user-pool-client `
       --allowed-o-auth-flows implicit `
       --allowed-o-auth-scopes openid email `
-      --callback-urls $CallbackUrl `
-      --logout-urls $CallbackUrl `
+      --callback-urls $CallbackUrls `
+      --logout-urls $CallbackUrls `
       --supported-identity-providers COGNITO | Out-Null
   }
   $domainPrefix = "orbitforge-$accountId"
@@ -648,7 +648,7 @@ Set-BucketPolicyForOac -DistributionArn $distArn
 $siteUrl = "https://$($dist.Domain)"
 Ensure-PrivateBucket -Bucket $contentBucket
 Ensure-CodeBuild -DistributionId $dist.Id
-$cognito = Ensure-Cognito -CallbackUrl "$siteUrl/studio/"
+$cognito = Ensure-Cognito -CallbackUrls @("$siteUrl/", "$siteUrl/studio/")
 Update-LambdaStudioConfig -Cognito $cognito
 $state.ContentBucket = $contentBucket
 $state.CognitoPoolId = $cognito.PoolId

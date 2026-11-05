@@ -13,7 +13,7 @@ export function LoginPage() {
     if (!domain || !clientID) {
       return;
     }
-    const redirect = `${window.location.origin}/studio/`;
+    const redirect = `${window.location.origin}/`;
     const url = new URL(`https://${domain}/login`);
     url.searchParams.set("client_id", clientID);
     url.searchParams.set("response_type", "token");
