@@ -1,0 +1,9 @@
+version: 0.2
+phases:
+  build:
+    commands:
+      - aws s3 sync "s3://${CONTENT_BUCKET}/published" ./published-export
+      - node frontend/scripts/materialize-published.mjs ./published-export frontend/content/articles
+      - cd frontend && npm ci && npm run build
+      - aws s3 sync frontend/out "s3://${SITE_BUCKET}" --delete
+      - aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/" "/articles/*" "/tags/*" "/series/*" "/sitemap.xml" "/rss.xml"

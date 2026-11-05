@@ -36,6 +36,47 @@ export function StudioEditor({ id }: { id: string }) {
       .catch((err: Error) => setMessage(err.message));
   }, [id, router]);
 
+  async function publishAction(path: "publish" | "unpublish") {
+    setMessage("");
+    const token = readAuthorToken();
+    const base = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1").replace(/\/$/, "");
+    const response = await fetch(`${base}/studio/documents/${id}/${path}`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}` },
+    });
+    const payload = await response.json();
+    if (!response.ok) {
+      setMessage(payload.message ?? "操作失败");
+      return;
+    }
+    setMessage(path === "publish" ? `发布已开始：${payload.jobId}` : `下线已开始：${payload.jobId}`);
+    const jobID = payload.jobId as string;
+    for (let i = 0; i < 30; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      const statusRes = await fetch(
+        `${base}/studio/publish-jobs/${encodeURIComponent(jobID)}?documentId=${encodeURIComponent(id)}`,
+        { headers: { authorization: `Bearer ${token}` } },
+      );
+      const statusPayload = await statusRes.json();
+      if (statusPayload.status === "SUCCEEDED") {
+        setMessage(path === "publish" ? "已公开" : "已从公开站点撤下");
+        return;
+      }
+      if (statusPayload.status === "FAILED") {
+        setMessage("构建失败，稿件未标记为已公开");
+        return;
+      }
+    }
+  }
+
+  function publish() {
+    return publishAction("publish");
+  }
+
+  function unpublish() {
+    return publishAction("unpublish");
+  }
+
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setMessage("");
@@ -69,6 +110,8 @@ export function StudioEditor({ id }: { id: string }) {
         <div className="flex gap-3">
           <button type="submit" className="rounded-lg bg-accent-cyan px-4 py-2 text-sm font-medium text-bg-primary">保存草稿</button>
           <button type="button" className="rounded-lg border border-border-default px-4 py-2 text-sm" onClick={() => setPreview((v) => !v)}>预览</button>
+          <button type="button" className="rounded-lg border border-border-default px-4 py-2 text-sm" onClick={() => void publish()}>发布</button>
+          <button type="button" className="rounded-lg border border-border-default px-4 py-2 text-sm" onClick={() => void unpublish()}>下线</button>
         </div>
         {message ? <p className="text-sm text-text-secondary">{message}</p> : null}
       </form>

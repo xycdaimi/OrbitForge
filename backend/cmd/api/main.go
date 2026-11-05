@@ -13,6 +13,7 @@ import (
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/codebuild"
 	"orbitforge/backend/internal/handler"
 	"orbitforge/backend/internal/middleware"
 	"orbitforge/backend/internal/repository"
@@ -28,6 +29,13 @@ func main() {
 		service.NewReactionService(reactionRepo),
 		docs,
 	)
+	if project := strings.TrimSpace(os.Getenv("CODEBUILD_PROJECT")); project != "" {
+		cfg, err := awsconfig.LoadDefaultConfig(context.Background())
+		if err != nil {
+			log.Fatalf("load aws config: %v", err)
+		}
+		api.SetBuildRunner(service.NewCodeBuildRunner(codebuild.NewFromConfig(cfg), project))
+	}
 	if poolID := strings.TrimSpace(os.Getenv("COGNITO_USER_POOL_ID")); poolID != "" {
 		region := strings.TrimSpace(os.Getenv("AWS_REGION"))
 		if region == "" {

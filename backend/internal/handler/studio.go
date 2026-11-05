@@ -12,7 +12,7 @@ import (
 )
 
 func (a *API) handleStudio(req events.APIGatewayV2HTTPRequest, method, path, requestID string) (events.APIGatewayV2HTTPResponse, bool, error) {
-	if path != "/api/v1/studio/documents" && path != "/api/v1/studio/media" && !strings.HasPrefix(path, "/api/v1/studio/documents/") {
+	if path != "/api/v1/studio/documents" && path != "/api/v1/studio/media" && !strings.HasPrefix(path, "/api/v1/studio/documents/") && !strings.HasPrefix(path, "/api/v1/studio/publish-jobs/") {
 		return events.APIGatewayV2HTTPResponse{}, false, nil
 	}
 	if _, err := a.authorSubject(req); err != nil {
@@ -69,6 +69,46 @@ func (a *API) handleStudio(req events.APIGatewayV2HTTPRequest, method, path, req
 			return resp, true, nil
 		}
 		resp, _ := JSONResponse(200, doc)
+		return resp, true, nil
+	case method == "POST" && strings.HasSuffix(path, "/publish"):
+		id := strings.TrimSuffix(strings.TrimPrefix(path, "/api/v1/studio/documents/"), "/publish")
+		if a.builds == nil {
+			resp, _ := ErrorResponse(503, "UNAVAILABLE", "publisher is not configured", requestID)
+			return resp, true, nil
+		}
+		result, err := a.docs.Publish(ctx, id, a.builds)
+		if err != nil {
+			resp, _ := mapServiceError(err, requestID)
+			return resp, true, nil
+		}
+		resp, _ := JSONResponse(202, result)
+		return resp, true, nil
+	case method == "POST" && strings.HasSuffix(path, "/unpublish"):
+		id := strings.TrimSuffix(strings.TrimPrefix(path, "/api/v1/studio/documents/"), "/unpublish")
+		if a.builds == nil {
+			resp, _ := ErrorResponse(503, "UNAVAILABLE", "publisher is not configured", requestID)
+			return resp, true, nil
+		}
+		result, err := a.docs.Unpublish(ctx, id, a.builds)
+		if err != nil {
+			resp, _ := mapServiceError(err, requestID)
+			return resp, true, nil
+		}
+		resp, _ := JSONResponse(202, result)
+		return resp, true, nil
+	case method == "GET" && strings.HasPrefix(path, "/api/v1/studio/publish-jobs/"):
+		jobID := strings.TrimPrefix(path, "/api/v1/studio/publish-jobs/")
+		docID := req.QueryStringParameters["documentId"]
+		if a.builds == nil || docID == "" {
+			resp, _ := ErrorResponse(400, "INVALID_ARGUMENT", "documentId is required", requestID)
+			return resp, true, nil
+		}
+		result, err := a.docs.MarkPublishedIfJobSucceeded(ctx, docID, jobID, a.builds)
+		if err != nil {
+			resp, _ := mapServiceError(err, requestID)
+			return resp, true, nil
+		}
+		resp, _ := JSONResponse(200, result)
 		return resp, true, nil
 	case method == "POST" && path == "/api/v1/studio/media":
 		var payload struct {

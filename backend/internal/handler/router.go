@@ -17,6 +17,7 @@ type API struct {
 	reactions *service.ReactionService
 	docs      *service.DocumentService
 	auth      middleware.Authorizer
+	builds    service.BuildRunner
 }
 
 func NewAPI(
@@ -35,6 +36,10 @@ func NewAPI(
 
 func (a *API) SetAuthorizer(auth middleware.Authorizer) {
 	a.auth = auth
+}
+
+func (a *API) SetBuildRunner(runner service.BuildRunner) {
+	a.builds = runner
 }
 
 func (a *API) Handle(req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
