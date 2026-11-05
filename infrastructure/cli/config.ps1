@@ -31,6 +31,24 @@ function Invoke-Aws {
   }
 }
 
+function Read-DotEnv {
+  param([string]$Path)
+  $values = @{}
+  if (-not (Test-Path $Path)) {
+    return $values
+  }
+  foreach ($line in Get-Content $Path) {
+    $trimmed = $line.Trim()
+    if ($trimmed -eq "" -or $trimmed.StartsWith("#")) { continue }
+    $eq = $trimmed.IndexOf("=")
+    if ($eq -lt 1) { continue }
+    $key = $trimmed.Substring(0, $eq).Trim()
+    $value = $trimmed.Substring($eq + 1).Trim().Trim('"').Trim("'")
+    $values[$key] = $value
+  }
+  return $values
+}
+
 function Read-DeployState {
   $state = [ordered]@{}
   if (-not (Test-Path $OrbitForgeConfig.StateFile)) {

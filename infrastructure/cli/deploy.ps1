@@ -504,8 +504,9 @@ function Ensure-Cognito {
   if ($domainMissing) {
     Invoke-Aws cognito-idp create-user-pool-domain --user-pool-id $poolId --domain $domainPrefix | Out-Null
   }
-  $email = $env:ORBITFORGE_AUTHOR_EMAIL
-  $password = $env:ORBITFORGE_AUTHOR_PASSWORD
+  $authorEnv = Read-DotEnv (Join-Path $PSScriptRoot ".env")
+  $email = $authorEnv["AUTHOR_EMAIL"]
+  $password = $authorEnv["AUTHOR_PASSWORD"]
   if ($email -and $password) {
     $prev = $ErrorActionPreference
     $ErrorActionPreference = "Continue"
@@ -527,7 +528,7 @@ function Ensure-Cognito {
     Write-Host "Author user ready: $email"
   }
   else {
-    Write-Host "ORBITFORGE_AUTHOR_EMAIL / ORBITFORGE_AUTHOR_PASSWORD not set; pool created without a user"
+    Write-Host "infrastructure/cli/.env 缺少 AUTHOR_EMAIL 或 AUTHOR_PASSWORD，未创建作者用户"
   }
   $domain = "$domainPrefix.auth.$($OrbitForgeConfig.Region).amazoncognito.com"
   return @{ PoolId = $poolId; ClientId = $clientId; Domain = $domain }
