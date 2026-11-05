@@ -528,7 +528,7 @@ function Ensure-Cognito {
     Write-Host "Author user ready: $email"
   }
   else {
-    Write-Host "infrastructure/cli/.env is missing AUTHOR_EMAIL or AUTHOR_PASSWORD; author user was not created"
+    Write-Host "infrastructure/cli/.env is missing AUTHOR_EMAIL or AUTHOR_PASSWORD; author user was not created. Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol."
   }
   $domain = "$domainPrefix.auth.$($OrbitForgeConfig.Region).amazoncognito.com"
   return @{ PoolId = $poolId; ClientId = $clientId; Domain = $domain }

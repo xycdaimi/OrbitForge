@@ -50,7 +50,7 @@ COGNITO_CLIENT_ID
 powershell -File infrastructure/cli/import-content.ps1
 ```
 
-`deploy.ps1` 会创建内容桶、仅允许管理员创建用户的 Cognito、CodeBuild 项目，并把上述变量写入 Lambda。作者邮箱与密码只从 `infrastructure/cli/.env` 的 `AUTHOR_EMAIL`、`AUTHOR_PASSWORD` 读取，不使用本机环境变量。该文件不入库。部署需人工确认后再执行。
+`deploy.ps1` 会创建内容桶、仅允许管理员创建用户的 Cognito、CodeBuild 项目，并把上述变量写入 Lambda。作者邮箱与密码只从 `infrastructure/cli/.env` 的 `AUTHOR_EMAIL`、`AUTHOR_PASSWORD` 读取，不使用本机环境变量。密码至少 8 位，且同时包含大写字母、小写字母、数字和符号。该文件不入库。部署需人工确认后再执行。
 
 仓储默认使用内存实现（`REPOSITORY` 未设置或非 `dynamodb`）。生产可设置：
 

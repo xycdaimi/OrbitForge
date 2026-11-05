@@ -62,7 +62,7 @@ powershell -File infrastructure/cli/publish-content.ps1
 - `NEXT_PUBLIC_SITE_URL=https://<cloudfront-domain>`
 - `NEXT_PUBLIC_API_BASE_URL=/api/v1`
 
-本地开发继续参考 `frontend/.env.example`。作者账号写在 `infrastructure/cli/.env`（示例见同目录 `.env.example`），不要把含真实邮箱或密码的 `.env` 提交入库。
+本地开发继续参考 `frontend/.env.example`。作者账号写在 `infrastructure/cli/.env`（示例见同目录 `.env.example`）。密码至少 8 位，且同时包含大写字母、小写字母、数字和符号。不要把含真实邮箱或密码的 `.env` 提交入库。
 
 ## 烟雾检查
 
