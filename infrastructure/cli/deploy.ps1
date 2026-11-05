@@ -473,6 +473,7 @@ function Ensure-Cognito {
       --user-pool-id $poolId `
       --client-name orbitforge-studio `
       --no-generate-secret `
+      --explicit-auth-flows ALLOW_USER_PASSWORD_AUTH ALLOW_REFRESH_TOKEN_AUTH `
       --allowed-o-auth-flows-user-pool-client `
       --allowed-o-auth-flows implicit `
       --allowed-o-auth-scopes openid email `
@@ -488,6 +489,7 @@ function Ensure-Cognito {
       --user-pool-id $poolId `
       --client-id $clientId `
       --client-name orbitforge-studio `
+      --explicit-auth-flows ALLOW_USER_PASSWORD_AUTH ALLOW_REFRESH_TOKEN_AUTH `
       --allowed-o-auth-flows-user-pool-client `
       --allowed-o-auth-flows implicit `
       --allowed-o-auth-scopes openid email `
