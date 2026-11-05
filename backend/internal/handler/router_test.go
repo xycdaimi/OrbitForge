@@ -17,6 +17,7 @@ func newTestAPI() *handler.API {
 		service.NewHealthService(),
 		service.NewFeedbackService(store, func() string { return "fb-1" }),
 		service.NewReactionService(store),
+		nil,
 	)
 }
 

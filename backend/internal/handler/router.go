@@ -15,17 +15,20 @@ type API struct {
 	health    *service.HealthService
 	feedback  *service.FeedbackService
 	reactions *service.ReactionService
+	docs      *service.DocumentService
 }
 
 func NewAPI(
 	health *service.HealthService,
 	feedback *service.FeedbackService,
 	reactions *service.ReactionService,
+	docs *service.DocumentService,
 ) *API {
 	return &API{
 		health:    health,
 		feedback:  feedback,
 		reactions: reactions,
+		docs:      docs,
 	}
 }
 
