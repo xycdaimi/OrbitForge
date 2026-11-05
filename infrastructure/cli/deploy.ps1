@@ -584,7 +584,7 @@ function Ensure-CodeBuild {
   $stage = Join-Path $workDir "source"
   if (Test-Path $stage) { Remove-Item $stage -Recurse -Force }
   New-Item -ItemType Directory -Force -Path $stage | Out-Null
-  robocopy $repoRoot $stage /E /NFL /NDL /NJH /NJS /XD node_modules .git out .work .next | Out-Null
+  robocopy $repoRoot $stage /E /NFL /NDL /NJH /NJS /XD node_modules .git out .work .next /XF .env | Out-Null
   $zip = Join-Path $workDir "codebuild-source.zip"
   if (Test-Path $zip) { Remove-Item $zip -Force }
   Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -Force
