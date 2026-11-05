@@ -27,7 +27,17 @@ function Invoke-Aws {
   param([Parameter(ValueFromRemainingArguments = $true)][string[]]$Args)
   & aws @Args --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region
   if ($LASTEXITCODE -ne 0) {
-    throw "aws $($Args -join ' ') failed with exit code $LASTEXITCODE"
+    $safe = New-Object System.Collections.Generic.List[string]
+    for ($i = 0; $i -lt $Args.Count; $i++) {
+      if ($Args[$i] -eq "--password" -and ($i + 1) -lt $Args.Count) {
+        $safe.Add("--password")
+        $safe.Add("***")
+        $i++
+        continue
+      }
+      $safe.Add($Args[$i])
+    }
+    throw "aws $($safe -join ' ') failed with exit code $LASTEXITCODE"
   }
 }
 
