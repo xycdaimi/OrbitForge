@@ -16,6 +16,7 @@ type API struct {
 	feedback  *service.FeedbackService
 	reactions *service.ReactionService
 	docs      *service.DocumentService
+	auth      middleware.Authorizer
 }
 
 func NewAPI(
@@ -32,6 +33,10 @@ func NewAPI(
 	}
 }
 
+func (a *API) SetAuthorizer(auth middleware.Authorizer) {
+	a.auth = auth
+}
+
 func (a *API) Handle(req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTTPResponse, error) {
 	requestID := middleware.RequestID(req)
 	method := strings.ToUpper(req.RequestContext.HTTP.Method)
@@ -40,6 +45,12 @@ func (a *API) Handle(req events.APIGatewayV2HTTPRequest) (events.APIGatewayV2HTT
 	switch {
 	case method == "GET" && path == "/api/v1/health":
 		return JSONResponse(200, a.health.Check())
+	case strings.HasPrefix(path, "/api/v1/studio"):
+		resp, handled, err := a.handleStudio(req, method, path, requestID)
+		if handled {
+			return resp, err
+		}
+		return ErrorResponse(404, "NOT_FOUND", "route not found", requestID)
 	case method == "POST" && path == "/api/v1/feedback":
 		return a.handleCreateFeedback(req, requestID)
 	case method == "GET" && strings.HasPrefix(path, "/api/v1/articles/") && strings.HasSuffix(path, "/reactions"):
@@ -104,6 +115,9 @@ func (a *API) handleCreateReaction(slug string, req events.APIGatewayV2HTTPReque
 func mapServiceError(err error, requestID string) (events.APIGatewayV2HTTPResponse, error) {
 	if errors.Is(err, service.ErrInvalidArgument) {
 		return ErrorResponse(400, "INVALID_ARGUMENT", err.Error(), requestID)
+	}
+	if errors.Is(err, service.ErrNotFound) {
+		return ErrorResponse(404, "NOT_FOUND", "document not found", requestID)
 	}
 	return ErrorResponse(500, "INTERNAL", "internal server error", requestID)
 }

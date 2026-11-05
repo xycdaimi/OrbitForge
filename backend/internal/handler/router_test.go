@@ -156,3 +156,20 @@ func TestInvalidFeedback(t *testing.T) {
 		t.Fatalf("status = %d, want 400", resp.StatusCode)
 	}
 }
+
+func TestStudioRequiresAuth(t *testing.T) {
+	api := newTestAPI()
+	resp, err := api.Handle(events.APIGatewayV2HTTPRequest{
+		RawPath: "/api/v1/studio/documents",
+		RequestContext: events.APIGatewayV2HTTPRequestContext{
+			RequestID: "req-studio",
+			HTTP:      events.APIGatewayV2HTTPRequestContextHTTPDescription{Method: "GET"},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.StatusCode != 401 {
+		t.Fatalf("status = %d, want 401", resp.StatusCode)
+	}
+}
