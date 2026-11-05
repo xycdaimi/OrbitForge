@@ -528,7 +528,7 @@ function Ensure-Cognito {
     Write-Host "Author user ready: $email"
   }
   else {
-    Write-Host "infrastructure/cli/.env 缺少 AUTHOR_EMAIL 或 AUTHOR_PASSWORD，未创建作者用户"
+    Write-Host "infrastructure/cli/.env is missing AUTHOR_EMAIL or AUTHOR_PASSWORD; author user was not created"
   }
   $domain = "$domainPrefix.auth.$($OrbitForgeConfig.Region).amazoncognito.com"
   return @{ PoolId = $poolId; ClientId = $clientId; Domain = $domain }
@@ -550,33 +550,31 @@ function Ensure-CodeBuild {
     Invoke-Aws iam create-role --role-name $roleName --assume-role-policy-document "file://$trustPath" | Out-Null
     Start-Sleep -Seconds 8
   }
-  $policy = @"
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"],
-      "Resource": "arn:aws:logs:$($OrbitForgeConfig.Region):${accountId}:log-group:/aws/codebuild/$($OrbitForgeConfig.CodeBuildProject):*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:ListBucket"],
-      "Resource": ["arn:aws:s3:::$contentBucket", "arn:aws:s3:::$contentBucket/*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket"],
-      "Resource": ["arn:aws:s3:::$siteBucket", "arn:aws:s3:::$siteBucket/*"]
-    },
-    {
-      "Effect": "Allow",
-      "Action": ["cloudfront:CreateInvalidation"],
-      "Resource": "arn:aws:cloudfront::${accountId}:distribution/$DistributionId"
-    }
-  ]
-}
-"@
+  $policy = @{
+    Version = "2012-10-17"
+    Statement = @(
+      @{
+        Effect = "Allow"
+        Action = @("logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents")
+        Resource = "arn:aws:logs:$($OrbitForgeConfig.Region):${accountId}:log-group:/aws/codebuild/$($OrbitForgeConfig.CodeBuildProject):*"
+      },
+      @{
+        Effect = "Allow"
+        Action = @("s3:GetObject", "s3:ListBucket")
+        Resource = @("arn:aws:s3:::$contentBucket", "arn:aws:s3:::$contentBucket/*")
+      },
+      @{
+        Effect = "Allow"
+        Action = @("s3:GetObject", "s3:PutObject", "s3:DeleteObject", "s3:ListBucket")
+        Resource = @("arn:aws:s3:::$siteBucket", "arn:aws:s3:::$siteBucket/*")
+      },
+      @{
+        Effect = "Allow"
+        Action = @("cloudfront:CreateInvalidation")
+        Resource = "arn:aws:cloudfront::${accountId}:distribution/$DistributionId"
+      }
+    )
+  } | ConvertTo-Json -Depth 6
   $policyPath = Join-Path $workDir "codebuild-policy.json"
   [System.IO.File]::WriteAllText($policyPath, $policy, (New-Object System.Text.UTF8Encoding $false))
   Invoke-Aws iam put-role-policy --role-name $roleName --policy-name orbitforge-publish-inline --policy-document "file://$policyPath" | Out-Null
@@ -595,27 +593,40 @@ function Ensure-CodeBuild {
   $projectName = aws codebuild batch-get-projects --names $OrbitForgeConfig.CodeBuildProject --profile $OrbitForgeConfig.Profile --region $OrbitForgeConfig.Region --query "projects[0].name" --output text 2>$null
   $exists = ($projectName -eq $OrbitForgeConfig.CodeBuildProject)
   $ErrorActionPreference = $prev
+  $projectPath = Join-Path $workDir "codebuild-project.json"
+  $projectJson = @{
+    name = $OrbitForgeConfig.CodeBuildProject
+    source = @{
+      type = "S3"
+      location = "$contentBucket/codebuild/source.zip"
+      buildspec = "infrastructure/codebuild/buildspec.yml"
+    }
+    artifacts = @{ type = "NO_ARTIFACTS" }
+    environment = @{
+      type = "LINUX_CONTAINER"
+      image = "aws/codebuild/standard:7.0"
+      computeType = "BUILD_GENERAL1_SMALL"
+      environmentVariables = @(
+        @{ name = "CONTENT_BUCKET"; value = $contentBucket },
+        @{ name = "SITE_BUCKET"; value = $siteBucket },
+        @{ name = "DISTRIBUTION_ID"; value = $DistributionId }
+      )
+    }
+    serviceRole = $roleArn
+  } | ConvertTo-Json -Depth 6
+  [System.IO.File]::WriteAllText($projectPath, $projectJson, (New-Object System.Text.UTF8Encoding $false))
   if (-not $exists) {
-    Invoke-Aws codebuild create-project `
-      --name $OrbitForgeConfig.CodeBuildProject `
-      --source "type=S3,location=$contentBucket/codebuild/source.zip,buildspec=infrastructure/codebuild/buildspec.yml" `
-      --artifacts "type=NO_ARTIFACTS" `
-      --environment "type=LINUX_CONTAINER,image=aws/codebuild/standard:7.0,computeType=BUILD_GENERAL1_SMALL,environmentVariables=[{name=CONTENT_BUCKET,value=$contentBucket},{name=SITE_BUCKET,value=$siteBucket},{name=DISTRIBUTION_ID,value=$DistributionId}]" `
-      --service-role $roleArn | Out-Null
+    Invoke-Aws codebuild create-project --cli-input-json "file://$projectPath" | Out-Null
   }
   else {
-    Invoke-Aws codebuild update-project `
-      --name $OrbitForgeConfig.CodeBuildProject `
-      --source "type=S3,location=$contentBucket/codebuild/source.zip,buildspec=infrastructure/codebuild/buildspec.yml" `
-      --environment "type=LINUX_CONTAINER,image=aws/codebuild/standard:7.0,computeType=BUILD_GENERAL1_SMALL,environmentVariables=[{name=CONTENT_BUCKET,value=$contentBucket},{name=SITE_BUCKET,value=$siteBucket},{name=DISTRIBUTION_ID,value=$DistributionId}]" `
-      --service-role $roleArn | Out-Null
+    Invoke-Aws codebuild update-project --cli-input-json "file://$projectPath" | Out-Null
   }
   Write-Host "CodeBuild project $($OrbitForgeConfig.CodeBuildProject) source uploaded"
 }
 
 function Update-LambdaStudioConfig {
   param($Cognito)
-  $envVars = "Variables={REPOSITORY=dynamodb,FEEDBACK_TABLE=$($OrbitForgeConfig.FeedbackTable),REACTIONS_TABLE=$($OrbitForgeConfig.ReactionsTable),CONTENT_BUCKET=$contentBucket,CODEBUILD_PROJECT=$($OrbitForgeConfig.CodeBuildProject),COGNITO_USER_POOL_ID=$($Cognito.PoolId),COGNITO_CLIENT_ID=$($Cognito.ClientId)}"
+  $envVars = 'Variables={REPOSITORY=dynamodb,FEEDBACK_TABLE=' + $OrbitForgeConfig.FeedbackTable + ',REACTIONS_TABLE=' + $OrbitForgeConfig.ReactionsTable + ',CONTENT_BUCKET=' + $contentBucket + ',CODEBUILD_PROJECT=' + $OrbitForgeConfig.CodeBuildProject + ',COGNITO_USER_POOL_ID=' + $Cognito.PoolId + ',COGNITO_CLIENT_ID=' + $Cognito.ClientId + '}'
   Invoke-Aws lambda update-function-configuration --function-name $OrbitForgeConfig.LambdaName --environment $envVars | Out-Null
   Invoke-Aws lambda wait function-updated --function-name $OrbitForgeConfig.LambdaName
 }
